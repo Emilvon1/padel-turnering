@@ -213,7 +213,7 @@
   setStatus('connecting','Forbinder...');
   onValue(ref(db,'deltagere'), snap => {
     participants = [];
-    snap.forEach(child => participants.push({ _key: child.key, ...child.val() }));
+    snap.forEach(child => { participants.push({ _key: child.key, ...child.val() }); });
     render();
     setStatus('connected', 'Forbundet · ' + participants.length + ' tilmeldt');
   }, err => setStatus('error','Fejl: ' + err.message));
