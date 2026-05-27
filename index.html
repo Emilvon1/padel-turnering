@@ -93,7 +93,9 @@
   <h1>🎾 Paddeltennis Turnering</h1>
   <p>Lørdag kl. 12:00</p>
   <span class="badge">Tilmeld dig herunder</span>
-  <button id="adminBtn" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;transition:all 0.15s;" onclick="openAdminLogin()">🔒 Admin</button>
+  <div id="adminBtnContainer" style="position:absolute;top:10px;right:10px;display:flex;gap:6px;align-items:center;">
+    <button id="adminBtn" style="background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;">🔒 Admin</button>
+  </div>
 </header>
 
 <main>
@@ -181,17 +183,6 @@
 
 <div id="toast" class="toast"></div>
 
-<div id="adminModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;">
-  <div style="background:white;border-radius:12px;padding:24px;max-width:300px;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
-    <h3 style="margin-bottom:16px;color:#333;">Admin Login</h3>
-    <input type="password" id="adminPassword" placeholder="Adgangskode" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;margin-bottom:12px;font-size:0.95rem;" />
-    <div style="display:flex;gap:8px;">
-      <button onclick="loginAdmin()" style="flex:1;background:#2d7a3a;color:white;border:none;padding:10px;border-radius:8px;font-weight:600;cursor:pointer;">Login</button>
-      <button onclick="closeAdminModal()" style="flex:1;background:#f0f0f0;border:none;padding:10px;border-radius:8px;font-weight:600;cursor:pointer;">Luk</button>
-    </div>
-  </div>
-</div>
-
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getDatabase, ref, push, remove, onValue, serverTimestamp }
@@ -264,24 +255,44 @@
 
   // ── Admin functions ───────────────────────────────────────────────────────
   window.openAdminLogin = () => {
-    document.getElementById('adminModal').style.display = 'flex';
-    document.getElementById('adminPassword').focus();
-  };
-  window.closeAdminModal = () => {
-    document.getElementById('adminModal').style.display = 'none';
-    document.getElementById('adminPassword').value = '';
+    const container = document.getElementById('adminBtnContainer');
+    const btn = document.getElementById('adminBtn');
+    btn.style.display = 'none';
+
+    const input = document.createElement('input');
+    input.id = 'adminPasswordInput';
+    input.type = 'password';
+    input.placeholder = 'Kode...';
+    input.style.cssText = 'background:rgba(255,255,255,0.9);color:#333;border:1px solid white;padding:6px 8px;border-radius:6px;font-size:0.8rem;width:120px;transition:all 0.15s;';
+    input.onkeypress = (e) => {
+      if (e.key === 'Enter') window.loginAdmin();
+    };
+    input.onblur = () => {
+      setTimeout(() => {
+        if (document.activeElement !== input) {
+          input.remove();
+          btn.style.display = '';
+        }
+      }, 100);
+    };
+
+    container.appendChild(input);
+    input.focus();
   };
   window.loginAdmin = () => {
-    const pwd = document.getElementById('adminPassword').value;
+    const input = document.getElementById('adminPasswordInput');
+    const pwd = input.value;
     if (pwd === ADMIN_PASSWORD) {
       window.isAdmin = true;
       localStorage.setItem('padel_admin', 'true');
       showToast('✅ Admin login velykket');
       updateAdminUI();
       render();
-      closeAdminModal();
+      input.remove();
     } else {
       showToast('❌ Forkert adgangskode');
+      input.value = '';
+      input.focus();
     }
   };
   window.logoutAdmin = () => {
@@ -293,8 +304,11 @@
   };
   function updateAdminUI() {
     const btn = document.getElementById('adminBtn');
+    const input = document.getElementById('adminPasswordInput');
+    if (input) input.remove();
+
     if (window.isAdmin) {
-      btn.textContent = '🔓 Admin (logget ind)';
+      btn.textContent = '🔓 Admin';
       btn.style.background = 'rgba(76, 175, 80, 0.3)';
       btn.onclick = window.logoutAdmin;
     } else {
