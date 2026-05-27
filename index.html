@@ -239,12 +239,30 @@
 
   // Initialize admin UI
   updateAdminUI();
-  document.getElementById('adminBtn').onclick = window.openAdminLogin;
-  document.getElementById('adminLoginBtn').onclick = window.loginAdmin;
-  document.getElementById('adminLoginPassword').onkeypress = (e) => {
+
+  // Admin button click handler
+  const adminBtn = document.getElementById('adminBtn');
+  adminBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.openAdminLogin();
+  });
+
+  // Login button click handler
+  document.getElementById('adminLoginBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.loginAdmin();
+  });
+
+  // Password field enter key handler
+  document.getElementById('adminLoginPassword').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') window.loginAdmin();
-  };
-  document.getElementById('adminLogoutBtn').onclick = window.logoutAdmin;
+  });
+
+  // Logout button click handler
+  document.getElementById('adminLogoutBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.logoutAdmin();
+  });
 
   // Restore admin status on load
   if (localStorage.getItem('padel_admin') === 'true') {
@@ -354,7 +372,7 @@
   window.deleteParticipant = (key) => {
     const p = participants.find(x => x._key === key);
     if (p && confirm(`Slet ${p.navn}?`)) {
-      remove(ref(db, 'participants/' + key));
+      remove(ref(db, 'deltagere/' + key));
       renderAdminDashboard();
     }
   };
