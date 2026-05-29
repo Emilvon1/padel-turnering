@@ -1,1 +1,1 @@
-file:///Users/emilrosenbom/padel-turnering/index.html
+https://emilvon1.github.io/padel-turnering/
