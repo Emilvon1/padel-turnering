@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Paddeltennis Turnering 🎾</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
   <style>
     :root {
       --green: #2d7a3a;
@@ -31,8 +33,8 @@
     .field { display: flex; flex-direction: column; gap: 5px; }
     .field.full { grid-column: 1 / -1; }
     label { font-size: 0.82rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
-    input, select { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.15s; background: white; }
-    input:focus, select:focus { outline: none; border-color: var(--green-light); }
+    input, select, textarea { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.15s; background: white; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green-light); }
     .level-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .level-option { position: relative; }
     .level-option input[type="radio"] { position: absolute; opacity: 0; width: 0; }
@@ -45,6 +47,7 @@
     .btn:disabled { background: #aaa; cursor: not-allowed; transform: none; }
     .btn-secondary { background: white; color: var(--green); border: 2px solid var(--green); margin-top: 10px; }
     .btn-secondary:hover { background: var(--green-pale); }
+    .btn-small { width: auto; padding: 6px 12px; font-size: 0.8rem; margin: 0; }
     .count-bar { display: flex; align-items: center; justify-content: space-between; background: var(--green-pale); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.9rem; }
     .count-bar strong { color: var(--green); font-size: 1.1rem; }
     .participant-list { display: flex; flex-direction: column; gap: 8px; }
@@ -70,11 +73,11 @@
     .match-vs { font-size: 0.75rem; font-weight: 800; color: var(--muted); text-align: center; }
     .match-num { font-size: 0.68rem; color: var(--muted); font-weight: 600; margin-bottom: 4px; text-align: center; }
     .empty-state { text-align: center; color: var(--muted); padding: 24px 0; font-size: 0.9rem; }
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #333; color: white; padding: 12px 20px; border-radius: 30px; font-size: 0.88rem; font-weight: 600; transition: transform 0.3s ease; z-index: 999; pointer-events: none; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #333; color: white; padding: 12px 20px; border-radius: 30px; font-size: 0.88rem; font-weight: 600; transition: transform 0.3s ease; z-index: 99999; pointer-events: none; }
     .toast.show { transform: translateX(-50%) translateY(0); }
-    .tabs { display: flex; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--border); margin-bottom: 16px; }
-    .tab { flex: 1; padding: 9px 8px; background: white; border: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--muted); transition: all 0.15s; }
-    .tab:not(:last-child) { border-right: 1.5px solid var(--border); }
+    .tabs { display: flex; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--border); margin-bottom: 16px; flex-wrap: wrap; }
+    .tab { flex: 1; min-width: 80px; padding: 9px 8px; background: white; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: var(--muted); transition: all 0.15s; border-right: 1.5px solid var(--border); text-align: center; }
+    .tab:last-child { border-right: none; }
     .tab.active { background: var(--green); color: white; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -85,18 +88,93 @@
     .status-dot.error { background: #e53935; }
     .link-row { display: flex; gap: 8px; align-items: center; background: var(--gray); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; margin-top: 8px; font-size: 0.82rem; word-break: break-all; color: var(--muted); }
     .copy-btn { background: var(--green); color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .admin-table th { background: var(--green-pale); padding: 10px; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border); }
+    .admin-table td { padding: 10px; border-bottom: 1px solid var(--border); }
+    .admin-table tr:hover { background: #fafafa; }
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 50000; align-items: center; justify-content: center; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+    /* Announcement banner on public side */
+    .announcement-banner { background: #fff3e0; border: 1.5px solid #ffb74d; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; }
+    .announcement-banner .ann-item { padding: 8px 0; border-bottom: 1px solid #ffe0b2; font-size: 0.9rem; }
+    .announcement-banner .ann-item:last-child { border-bottom: none; }
+    .announcement-banner .ann-time { font-size: 0.72rem; color: var(--muted); }
+    /* Bracket styles */
+    .bracket-container { overflow-x: auto; padding: 20px 0; }
+    .bracket { display: flex; align-items: stretch; min-width: max-content; }
+    .bracket-round { display: flex; flex-direction: column; min-width: 180px; position: relative; }
+    .bracket-round-title { font-size: 0.75rem; font-weight: 700; color: var(--green); text-transform: uppercase; text-align: center; margin-bottom: 8px; }
+    .bracket-matches { display: flex; flex-direction: column; flex: 1; justify-content: space-around; gap: 8px; }
+    .bracket-match { border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; background: white; position: relative; }
+    .bracket-match.completed { border-color: var(--green-light); }
+    .bracket-match.active { border-color: #e65100; }
+    .bracket-team-row { display: flex; justify-content: space-between; padding: 8px 10px; font-size: 0.8rem; border-bottom: 1px solid var(--border); }
+    .bracket-team-row:last-child { border-bottom: none; }
+    .bracket-team-row.winner { background: var(--green-pale); font-weight: 700; }
+    .bracket-team-row .score { font-weight: 700; min-width: 20px; text-align: right; }
+    .bracket-bane { font-size: 0.65rem; color: var(--muted); text-align: center; padding: 2px; background: var(--gray); }
+    /* Bracket connector lines */
+    .bracket-connector { display: flex; flex-direction: column; justify-content: space-around; width: 32px; flex-shrink: 0; }
+    .bracket-connector-pair { display: flex; flex-direction: column; flex: 1; justify-content: center; position: relative; }
+    .bracket-connector-pair::before { content: ''; position: absolute; right: 0; top: 25%; bottom: 25%; width: 1.5px; background: var(--border); }
+    .bracket-connector-pair::after { content: ''; position: absolute; right: 0; top: 50%; width: 12px; height: 1.5px; background: var(--border); }
+    .bracket-connector-pair .conn-top,
+    .bracket-connector-pair .conn-bot { flex: 1; position: relative; }
+    .bracket-connector-pair .conn-top::after { content: ''; position: absolute; right: 0; top: 50%; width: 12px; height: 1.5px; background: var(--border); }
+    .bracket-connector-pair .conn-bot::after { content: ''; position: absolute; right: 0; top: 50%; width: 12px; height: 1.5px; background: var(--border); }
+    /* Round header pills for admin matches */
+    .round-header { background: var(--green); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; margin: 16px 0 10px; text-align: center; }
+    .round-header:first-child { margin-top: 0; }
+    /* Filter buttons row */
+    .filter-pills { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-pill { padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 20px; background: white; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--muted); transition: all 0.15s; }
+    .filter-pill.active { background: var(--green); color: white; border-color: var(--green); }
+    /* Inline edit row */
+    .inline-edit input, .inline-edit select { padding: 4px 8px; font-size: 0.82rem; border: 1.5px solid var(--green-light); border-radius: 6px; }
+    /* Partner autocomplete */
+    .autocomplete-wrapper { position: relative; }
+    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; max-height: 150px; overflow-y: auto; display: none; }
+    .autocomplete-list.show { display: block; }
+    .autocomplete-item { padding: 8px 12px; cursor: pointer; font-size: 0.85rem; }
+    .autocomplete-item:hover { background: var(--green-pale); }
+    .partner-warning { color: #e65100; font-size: 0.72rem; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+    /* Drag and drop for teams */
+    .team-member-draggable { cursor: grab; padding: 6px 8px; border-radius: 6px; transition: background 0.1s, opacity 0.2s; }
+    .team-member-draggable:hover { background: rgba(0,0,0,0.05); }
+    .team-member-draggable.dragging { opacity: 0.4; }
+    .team-card.drag-over { border-color: var(--green-light); background: var(--green-pale); }
+    /* Checkbox settings */
+    .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+    .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--green); }
+    .checkbox-row label { font-size: 0.9rem; text-transform: none; font-weight: 500; color: var(--text); cursor: pointer; }
+    /* Admin floating bar */
+    .admin-float-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--green); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; font-size: 0.85rem; box-shadow: 0 -2px 12px rgba(0,0,0,0.2); }
+    .admin-float-bar button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.82rem; }
+    .admin-float-bar button:hover { background: rgba(255,255,255,0.3); }
+    /* Bane name tags */
+    .bane-tag { display: inline-block; background: var(--green-pale); color: var(--green); font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; }
+    /* Winner celebration */
+    .winner-banner { background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%); color: #333; padding: 20px; border-radius: 12px; text-align: center; margin: 16px 0; }
+    .winner-banner h3 { font-size: 1.3rem; margin-bottom: 4px; }
+    .winner-banner .trophy { font-size: 2rem; }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>🎾 Paddeltennis Turnering</h1>
-  <p>Lørdag kl. 12:00</p>
+<!-- Public page header -->
+<header id="publicHeader">
+  <h1>🎾 <span id="headerTitle">Paddeltennis Turnering</span></h1>
+  <p id="headerSubtitle">Lordag kl. 12:00</p>
   <span class="badge">Tilmeld dig herunder</span>
-  <button id="adminBtn" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;transition:all 0.15s;">🔒 Admin</button>
+  <button id="adminBtn" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;">🔒 Admin</button>
 </header>
 
+<!-- Public announcements -->
+<div id="publicAnnouncements" style="max-width:720px;margin:0 auto;padding:16px 16px 0;display:none;"></div>
+
 <main>
+  <!-- Signup form card -->
   <div class="card">
     <h2>📋 Tilmelding</h2>
     <div class="connection-bar">
@@ -114,31 +192,33 @@
           <input type="number" id="alder" placeholder="F.eks. 25" min="5" max="99" required />
         </div>
       </div>
+      <div class="form-row" id="optionalFieldsRow">
+        <div class="field" id="emailField">
+          <label>Email (valgfrit)</label>
+          <input type="email" id="email" placeholder="din@email.com" />
+        </div>
+        <div class="field" id="telefonField">
+          <label>Telefon (valgfrit)</label>
+          <input type="tel" id="telefon" placeholder="+45 12 34 56 78" />
+        </div>
+      </div>
       <div class="field" style="margin-top:12px;">
         <label>Niveau *</label>
         <div class="level-grid">
-          <div class="level-option">
-            <input type="radio" name="niveau" id="ny" value="Ny" required />
-            <label for="ny"><span class="emoji">🌱</span>Ny</label>
-          </div>
-          <div class="level-option">
-            <input type="radio" name="niveau" id="begynder" value="Begynder" />
-            <label for="begynder"><span class="emoji">🎯</span>Begynder</label>
-          </div>
-          <div class="level-option">
-            <input type="radio" name="niveau" id="øvet" value="Øvet" />
-            <label for="øvet"><span class="emoji">⚡</span>Øvet</label>
-          </div>
+          <div class="level-option"><input type="radio" name="niveau" id="ny" value="Ny" required /><label for="ny"><span class="emoji">🌱</span>Ny</label></div>
+          <div class="level-option"><input type="radio" name="niveau" id="begynder" value="Begynder" /><label for="begynder"><span class="emoji">🎯</span>Begynder</label></div>
+          <div class="level-option"><input type="radio" name="niveau" id="øvet" value="Øvet" /><label for="øvet"><span class="emoji">⚡</span>Øvet</label></div>
         </div>
       </div>
       <div class="field full" style="margin-top:12px;">
-        <label>Ønsket makker (valgfrit)</label>
-        <input type="text" id="makker" placeholder="Navn på ønsket makker" />
+        <label>Onsket makker (valgfrit)</label>
+        <input type="text" id="makker" placeholder="Navn pa onsket makker" />
       </div>
       <button type="submit" class="btn" id="submitBtn">✅ Tilmeld mig</button>
     </form>
   </div>
 
+  <!-- Info / tabs card -->
   <div class="card">
     <div class="count-bar">
       <span>Tilmeldte</span>
@@ -148,6 +228,7 @@
       <button class="tab active" onclick="switchTab('liste',this)">👥 Deltagere</button>
       <button class="tab" onclick="switchTab('hold',this)">🏆 Hold</button>
       <button class="tab" onclick="switchTab('kampe',this)">📅 Kampe</button>
+      <button class="tab" onclick="switchTab('rangliste-public',this)">📊 Rangliste</button>
     </div>
 
     <div id="tab-liste" class="tab-content active">
@@ -158,57 +239,233 @@
       <div style="margin-top:16px;">
         <label style="font-size:0.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;">Del dette link med alle</label>
         <div class="link-row">
-          <span id="shareUrl" style="flex:1;">—</span>
-          <button class="copy-btn" onclick="copyLink()">Kopiér</button>
+          <span id="shareUrl" style="flex:1;">-</span>
+          <button class="copy-btn" onclick="copyLink()">Kopier</button>
         </div>
       </div>
     </div>
 
     <div id="tab-hold" class="tab-content">
-      <div class="info-box">Hold dannes tilfældigt — makkerønsker respekteres automatisk.</div>
-      <button class="btn" onclick="generateTeams()">🎲 Generer tilfældige hold</button>
-      <div id="teamsList" style="margin-top:14px;"></div>
+      <div class="info-box">Hold dannes af admin. De vises her nar de er klar.</div>
+      <div id="teamsList" style="margin-top:14px;"><div class="empty-state">Ingen hold endnu</div></div>
     </div>
 
     <div id="tab-kampe" class="tab-content">
-      <div class="info-box">Generér hold først — så laves kampplanen automatisk.</div>
+      <div class="info-box">Turneringstrae - vindere rykker videre til naeste runde.</div>
       <div id="matchesList" class="matches-list">
-        <div class="empty-state">Generer hold for at se kampplanen</div>
+        <div class="empty-state">Hold genereres for at se kampplanen</div>
       </div>
+      <div id="publicBracket" style="margin-top:16px;"></div>
+    </div>
+
+    <div id="tab-rangliste-public" class="tab-content">
+      <div class="info-box">Live rangliste - opdateres nar kampe afslutter.</div>
+      <table class="admin-table" style="font-size:0.9rem;">
+        <thead><tr>
+          <th style="width:50px;">Plads</th><th>Hold</th><th style="width:70px;">Point</th>
+          <th style="width:60px;">Sejre</th><th style="width:60px;">Ned.</th><th style="width:100px;">Sejr%</th>
+        </tr></thead>
+        <tbody id="publicLeaderboardBody">
+          <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater endnu</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </main>
 
 <div id="toast" class="toast"></div>
 
+<!-- Admin floating bar (shown when admin is on public page) -->
+<div id="adminFloatBar" class="admin-float-bar" style="display:none;">
+  <span>⚙️ Admin aktiv</span>
+  <div style="display:flex;gap:8px;">
+    <button onclick="showAdminDashboard()">Abne Admin Panel</button>
+    <button onclick="logoutAdmin()">Log ud</button>
+  </div>
+</div>
+
 <!-- Admin Login Screen -->
 <div id="adminLoginScreen" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--green-pale);z-index:10000;overflow:auto;">
   <div style="max-width:400px;margin:60px auto;background:white;border-radius:12px;padding:40px;box-shadow:0 10px 40px rgba(0,0,0,0.1);">
     <h1 style="font-size:2rem;margin-bottom:10px;color:var(--green);">🔐 Admin</h1>
-    <p style="color:var(--muted);margin-bottom:30px;">Adgangskode påkrævet</p>
+    <p style="color:var(--muted);margin-bottom:30px;">Adgangskode pakraevet</p>
     <input type="password" id="adminLoginPassword" placeholder="Adgangskode" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:16px;font-size:1rem;" />
     <button id="adminLoginBtn" style="width:100%;padding:13px;background:var(--green);color:white;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Login</button>
   </div>
 </div>
 
-<!-- Admin Dashboard -->
+<!-- Admin Dashboard (overlay) -->
 <div id="adminDashboard" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#f5f5f5;z-index:10000;overflow:auto;">
   <header style="background:var(--green);color:white;padding:20px;display:flex;justify-content:space-between;align-items:center;">
     <h1 style="font-size:1.5rem;">⚙️ Admin Panel</h1>
-    <button id="adminLogoutBtn" style="background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">Log ud</button>
+    <div style="display:flex;gap:8px;">
+      <button onclick="showPublicPage()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">👁 Vis forside</button>
+      <button onclick="logoutAdmin()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">Log ud</button>
+    </div>
   </header>
+  <main style="max-width:1000px;margin:0 auto;padding:24px 16px;">
+    <div style="background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:24px;">
+      <div class="tabs" style="margin:0;border-radius:0;flex-wrap:wrap;">
+        <button class="tab active" onclick="switchAdminTab('indstillinger',this)" style="border-radius:0;">⚙️ Indstillinger</button>
+        <button class="tab" onclick="switchAdminTab('deltagere',this)" style="border-radius:0;">👥 Deltagere</button>
+        <button class="tab" onclick="switchAdminTab('hold',this)" style="border-radius:0;">🏆 Hold</button>
+        <button class="tab" onclick="switchAdminTab('kampe',this)" style="border-radius:0;">📅 Kampe</button>
+        <button class="tab" onclick="switchAdminTab('rangliste',this)" style="border-radius:0;">📊 Rangliste</button>
+        <button class="tab" onclick="switchAdminTab('beskeder',this)" style="border-radius:0;">📢 Opslagstavle</button>
+        <button class="tab" onclick="switchAdminTab('eksport',this)" style="border-radius:0;">📥 Eksport</button>
+      </div>
 
-  <main style="max-width:900px;margin:0 auto;padding:24px 16px;">
-    <div style="background:white;border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
-      <h2 style="font-size:1.3rem;margin-bottom:20px;color:var(--green);">Deltager (i alt: <span id="adminParticipantCount">0</span>)</h2>
-      <div id="adminParticipantList" style="display:flex;flex-direction:column;gap:12px;"></div>
+      <!-- Settings Tab -->
+      <div id="tab-indstillinger" class="tab-content active" style="padding:24px;">
+        <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Turneringsindstillinger</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <div class="field"><label>Turneringsnavn</label><input type="text" id="tournamentName" value="Paddeltennis Turnering" /></div>
+          <div class="field"><label>Dato & Tidspunkt</label><input type="text" id="tournamentDateTime" value="Lordag kl. 12:00" /></div>
+          <div class="field"><label>Placering</label><input type="text" id="tournamentLocation" placeholder="Fx. Lalandia" /></div>
+          <div class="field"><label>Max. deltagere</label><input type="number" id="maxParticipants" placeholder="Fx. 32" /></div>
+          <div class="field"><label>Antal baner</label><input type="number" id="courtCount" value="4" min="1" max="20" /></div>
+          <div class="field"><label>Format</label>
+            <select id="tournamentFormat">
+              <option value="knockout" selected>Knockout (eliminering)</option>
+              <option value="americano">Americano (Round-robin)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Court names -->
+        <div style="margin-top:24px;">
+          <h3 style="color:var(--green);font-size:1rem;margin-bottom:12px;">Banenavne</h3>
+          <div id="courtNamesContainer" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+        </div>
+
+        <!-- Field visibility -->
+        <div style="margin-top:24px;">
+          <h3 style="color:var(--green);font-size:1rem;margin-bottom:12px;">Tilmeldingsfelter</h3>
+          <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;">Vaelg hvilke felter der vises i tilmeldingsformularen</p>
+          <div class="checkbox-row"><input type="checkbox" id="showEmail" checked /><label for="showEmail">Email</label></div>
+          <div class="checkbox-row"><input type="checkbox" id="showTelefon" checked /><label for="showTelefon">Telefon</label></div>
+        </div>
+
+        <button class="btn" onclick="saveTournamentSettings()" style="max-width:200px;margin-top:20px;">💾 Gem indstillinger</button>
+      </div>
+
+      <!-- Participants Tab -->
+      <div id="tab-deltagere" class="tab-content" style="padding:24px;">
+        <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Deltager Management</h2>
+        <div style="margin-bottom:20px;display:flex;gap:10px;">
+          <button class="btn btn-secondary" onclick="openAddParticipantModal()" style="flex:1;">+ Tilf&oslash;j deltager</button>
+          <button class="btn btn-secondary" onclick="openBulkImportModal()" style="flex:1;">📤 Bulk import CSV</button>
+        </div>
+        <table class="admin-table" id="participantTable">
+          <thead id="participantTableHead"><tr><th>Navn</th><th>Niveau</th><th>Onsket makker</th><th>Aktuelt</th></tr></thead>
+          <tbody id="participantTableBody"><tr><td colspan="4" style="text-align:center;color:var(--muted);">Ingen deltagere</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- Teams Tab -->
+      <div id="admin-tab-hold" class="tab-content" style="padding:24px;">
+        <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Hold</h2>
+        <div class="info-box">Trak deltagere mellem hold for at tilpasse. Klik "Generer" for automatisk niveau-baseret matching.</div>
+        <div style="display:flex;gap:10px;margin-bottom:12px;">
+          <button class="btn" onclick="generateTeamsBalanced()" style="flex:1;">🎲 Generer hold (Niveau-baseret)</button>
+          <button class="btn btn-secondary" onclick="clearTeams()" style="flex:1;">🔄 Nulstil</button>
+        </div>
+        <div class="checkbox-row" style="margin-bottom:16px;">
+          <input type="checkbox" id="teamsVisible" />
+          <label for="teamsVisible" style="font-weight:700;">Gor hold synlige for deltagere</label>
+        </div>
+        <div id="adminTeamsList" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- Matches Tab -->
+      <div id="admin-tab-kampe" class="tab-content" style="padding:24px;">
+        <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Kampplan & Baner</h2>
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+          <button class="btn" onclick="generateBracket()" style="flex:1;min-width:150px;">🏆 Knockout</button>
+          <button class="btn" onclick="generateSeededQual()" style="flex:1;min-width:150px;background:#e65100;">🎯 Seeded Kvalifikation</button>
+          <button class="btn" onclick="generateRoundRobin()" style="flex:1;min-width:150px;background:#1565c0;">🔄 Alle mod alle</button>
+        </div>
+        <div id="adminFilterPills" class="filter-pills"></div>
+        <div id="adminMatchesList" style="margin-top:10px;"></div>
+      </div>
+
+      <!-- Leaderboard Tab -->
+      <div id="tab-rangliste" class="tab-content" style="padding:24px;">
+        <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Live Rangliste</h2>
+        <div class="info-box">Ranglisten opdateres automatisk nar kampresultater tilfojes.</div>
+        <table class="admin-table" style="font-size:0.9rem;">
+          <thead><tr>
+            <th style="width:50px;">Plads</th><th>Hold</th><th style="width:70px;">Point</th>
+            <th style="width:60px;">Sejre</th><th style="width:60px;">Ned.</th><th style="width:100px;">Sejr%</th>
+          </tr></thead>
+          <tbody id="leaderboardBody">
+            <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater endnu</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Messages/Announcements Tab -->
+      <div id="tab-beskeder" class="tab-content" style="padding:24px;">
+        <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">📢 Opslagstavle</h2>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">Beskeder vises pa forsiden for alle deltagere i realtid.</p>
+        <div class="field">
+          <label>Ny besked</label>
+          <textarea id="messageText" placeholder="Skriv din besked..." style="min-height:80px;"></textarea>
+        </div>
+        <button class="btn" onclick="postAnnouncement()" style="max-width:200px;margin-top:12px;">📢 Slå op</button>
+        <div id="announcementsList" style="margin-top:20px;">
+          <h3 style="color:var(--green);margin-bottom:10px;">Aktive opslag</h3>
+          <div id="announcementsLog"></div>
+        </div>
+      </div>
+
+      <!-- Export Tab -->
+      <div id="tab-eksport" class="tab-content" style="padding:24px;">
+        <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Eksport</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <button class="btn" onclick="exportCSV()">📥 Deltagere (CSV)</button>
+          <button class="btn" onclick="exportTeamsCSV()">📥 Hold (CSV)</button>
+          <button class="btn" onclick="exportScheduleCSV()">📥 Kampplan (CSV)</button>
+        </div>
+      </div>
     </div>
   </main>
 </div>
 
+<!-- Add Participant Modal -->
+<div id="addParticipantModal" class="modal">
+  <div class="modal-content">
+    <h2 style="color:var(--green);margin-bottom:20px;">Tilf&oslash;j deltager</h2>
+    <form onsubmit="handleAddParticipant(event)">
+      <div class="field"><label>Navn *</label><input type="text" id="modalNavn" required /></div>
+      <div class="field"><label>Alder</label><input type="number" id="modalAlder" min="5" max="99" /></div>
+      <div class="field"><label>Niveau *</label>
+        <select id="modalNiveau" required><option value="">Vaelg niveau</option><option value="Ny">Ny</option><option value="Begynder">Begynder</option><option value="Ovet">Ovet</option></select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button type="submit" class="btn" style="flex:1;">Tilf&oslash;j</button>
+        <button type="button" class="btn btn-secondary" onclick="closeAddParticipantModal()" style="flex:1;">Annuller</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bulk Import Modal -->
+<div id="bulkImportModal" class="modal">
+  <div class="modal-content">
+    <h2 style="color:var(--green);margin-bottom:20px;">Bulk Import CSV</h2>
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:15px;">Upload CSV-fil med kolonnerne: Navn, Email, Niveau</p>
+    <input type="file" id="bulkImportFile" accept=".csv" />
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button onclick="handleBulkImport()" class="btn" style="flex:1;">Importer</button>
+      <button onclick="closeBulkImportModal()" class="btn btn-secondary" style="flex:1;">Annuller</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-  import { getDatabase, ref, push, remove, onValue, serverTimestamp }
+  import { getDatabase, ref, push, remove, update, onValue, serverTimestamp, set, get }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
   const firebaseConfig = {
@@ -220,277 +477,1320 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  const db  = getDatabase(app);
+  const db = getDatabase(app);
 
+  // ═══════════════════════════════════════════════════════════════════
+  // State
+  // ═══════════════════════════════════════════════════════════════════
   const colors = ['#2d7a3a','#1565c0','#6a1b9a','#c62828','#e65100','#00695c','#4527a0','#ad1457','#37474f','#558b2f'];
+  const levelScores = { 'Ny': 1, 'Begynder': 2, 'Ovet': 3, 'Øvet': 3 };
   let participants = [];
   let currentTeams = [];
+  let allMatches = []; // bracket matches
+  let qualRounds = 0; // 0 = knockout, >0 = antal kvalifikationsrunder (alle mod alle)
+  let matchResults = {};
+  let tournament = {};
+  let announcements = [];
+  let teamsVisible = false;
+  let editingRow = null;
   window.isAdmin = false;
-  const ADMIN_PASSWORD = 'Banan';
+  const ADMIN_PASSWORD = 'admin';
 
-  // ── Status ─────────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════
+  // Init
+  // ═══════════════════════════════════════════════════════════════════
+  async function initializeTournament() {
+    try {
+      const snap = await get(ref(db, 'tournaments/default'));
+      if (snap.exists()) {
+        tournament = snap.val();
+      } else {
+        tournament = { name: 'Paddeltennis Turnering', dateTime: 'Lordag kl. 12:00', location: '', maxParticipants: null, courtCount: 4, format: 'knockout', courtNames: {}, showEmail: false, showTelefon: false };
+        await set(ref(db, 'tournaments/default'), tournament);
+      }
+      applyTournamentSettings();
+    } catch(err) { console.error('Tournament init error:', err); }
+  }
+
+  function applyTournamentSettings() {
+    document.getElementById('headerTitle').textContent = tournament.name || 'Paddeltennis Turnering';
+    document.getElementById('headerSubtitle').textContent = tournament.dateTime || '';
+    // Form field visibility
+    const emailField = document.getElementById('emailField');
+    const telefonField = document.getElementById('telefonField');
+    const optRow = document.getElementById('optionalFieldsRow');
+    const showE = tournament.showEmail === true;
+    const showT = tournament.showTelefon === true;
+    if (emailField) emailField.style.display = showE ? '' : 'none';
+    if (telefonField) telefonField.style.display = showT ? '' : 'none';
+    if (!showE && !showT && optRow) optRow.style.display = 'none';
+    else if (optRow) optRow.style.display = '';
+    // Admin form
+    if (document.getElementById('tournamentName')) {
+      document.getElementById('tournamentName').value = tournament.name || '';
+      document.getElementById('tournamentDateTime').value = tournament.dateTime || '';
+      document.getElementById('tournamentLocation').value = tournament.location || '';
+      document.getElementById('maxParticipants').value = tournament.maxParticipants || '';
+      document.getElementById('courtCount').value = tournament.courtCount || 4;
+      document.getElementById('tournamentFormat').value = tournament.format || 'knockout';
+      document.getElementById('showEmail').checked = tournament.showEmail !== false;
+      document.getElementById('showTelefon').checked = tournament.showTelefon !== false;
+    }
+    renderCourtNames();
+  }
+
+  function renderCourtNames() {
+    const container = document.getElementById('courtNamesContainer');
+    if (!container) return;
+    const count = tournament.courtCount || 4;
+    const names = tournament.courtNames || {};
+    container.innerHTML = '';
+    for (let i = 1; i <= count; i++) {
+      container.innerHTML += `<div class="field"><label>Bane ${i}</label><input type="text" id="courtName${i}" value="${names[i] || 'Bane ' + i}" /></div>`;
+    }
+  }
+
+  function getCourtName(num) {
+    const names = tournament.courtNames || {};
+    return names[num] || 'Bane ' + num;
+  }
+
+  // Share URL
+  document.getElementById('shareUrl').textContent = 'https://emilvon1.github.io/padel-turnering/';
+
+  initializeTournament();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Status
+  // ═══════════════════════════════════════════════════════════════════
   function setStatus(state, msg) {
-    document.getElementById('statusDot').className = 'status-dot' + (state==='connected'?' connected':state==='error'?' error':'');
+    const dot = document.getElementById('statusDot');
+    dot.className = 'status-dot' + (state==='connected'?' connected':state==='error'?' error':'');
     document.getElementById('statusText').textContent = msg;
   }
 
-  // Update share URL
-  document.getElementById('shareUrl').textContent = 'https://emilvon1.github.io/padel-turnering/';
-
-  // Initialize admin UI
-  updateAdminUI();
-
-  // Admin button click handler
-  const adminBtn = document.getElementById('adminBtn');
-  adminBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    window.openAdminLogin();
-  });
-
-  // Login button click handler
-  document.getElementById('adminLoginBtn').addEventListener('click', (e) => {
-    e.preventDefault();
-    window.loginAdmin();
-  });
-
-  // Password field enter key handler
-  document.getElementById('adminLoginPassword').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') window.loginAdmin();
-  });
-
-  // Logout button click handler
-  document.getElementById('adminLogoutBtn').addEventListener('click', (e) => {
-    e.preventDefault();
-    window.logoutAdmin();
-  });
-
-  // Restore admin status on load
-  if (localStorage.getItem('padel_admin') === 'true') {
-    window.isAdmin = true;
-    setTimeout(() => {
-      document.getElementById('adminLoginScreen').style.display = 'none';
-      document.getElementById('adminDashboard').style.display = 'block';
-      document.getElementById('adminBtn').style.display = 'none';
-    }, 100);
-  }
-
-  // ── Live listener ──────────────────────────────────────────────────────────
-  setStatus('connecting','Forbinder...');
-  onValue(ref(db,'deltagere'), snap => {
-    participants = [];
-    snap.forEach(child => { participants.push({ _key: child.key, ...child.val() }); });
-    render();
-    if (window.isAdmin) renderAdminDashboard();
-    setStatus('connected', 'Forbundet · ' + participants.length + ' tilmeldt');
-  }, err => setStatus('error','Fejl: ' + err.message));
-
-  // ── Form ───────────────────────────────────────────────────────────────────
-  document.getElementById('signupForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const navn   = document.getElementById('navn').value.trim();
-    const alder  = parseInt(document.getElementById('alder').value);
-    const niveau = document.querySelector('input[name="niveau"]:checked')?.value;
-    const makker = document.getElementById('makker').value.trim();
-    if (!navn || !alder || !niveau) return;
-    if (participants.find(p => p.navn.toLowerCase() === navn.toLowerCase())) {
-      return showToast('⚠️ ' + navn + ' er allerede tilmeldt');
+  // ═══════════════════════════════════════════════════════════════════
+  // Admin Auth - persists until logout
+  // ═══════════════════════════════════════════════════════════════════
+  document.getElementById('adminBtn').addEventListener('click', () => {
+    if (window.isAdmin) {
+      showAdminDashboard();
+    } else {
+      document.getElementById('adminLoginScreen').style.display = 'block';
+      document.getElementById('adminLoginPassword').value = '';
+      document.getElementById('adminLoginPassword').focus();
     }
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true; btn.textContent = 'Gemmer...';
-    try {
-      await push(ref(db,'deltagere'), { navn, alder, niveau, makker, _ts: serverTimestamp() });
-      e.target.reset();
-      showToast('🎾 ' + navn + ' er tilmeldt!');
-    } catch(err) { showToast('❌ ' + err.message); }
-    btn.disabled = false; btn.textContent = '✅ Tilmeld mig';
   });
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
-  window.removeParticipant = async key => {
-    await remove(ref(db,'deltagere/' + key));
-    showToast('Deltager fjernet');
-  };
+  document.getElementById('adminLoginBtn').addEventListener('click', () => loginAdmin());
+  document.getElementById('adminLoginPassword').addEventListener('keypress', e => { if (e.key === 'Enter') loginAdmin(); });
 
-  // ── Admin functions ───────────────────────────────────────────────────────
-  window.openAdminLogin = () => {
-    document.getElementById('adminLoginScreen').style.display = 'block';
-    document.getElementById('adminLoginPassword').value = '';
-    document.getElementById('adminLoginPassword').focus();
-  };
-  window.loginAdmin = () => {
+  window.loginAdmin = function() {
     const pwd = document.getElementById('adminLoginPassword').value;
     if (pwd === ADMIN_PASSWORD) {
       window.isAdmin = true;
       localStorage.setItem('padel_admin', 'true');
       document.getElementById('adminLoginScreen').style.display = 'none';
-      document.getElementById('adminDashboard').style.display = 'block';
-      document.getElementById('adminBtn').style.display = 'none';
-      renderAdminDashboard();
-      showToast('✅ Admin login velykket');
+      showAdminDashboard();
+      showToast('✅ Admin login');
     } else {
       showToast('❌ Forkert adgangskode');
       document.getElementById('adminLoginPassword').value = '';
       document.getElementById('adminLoginPassword').focus();
     }
   };
-  window.logoutAdmin = () => {
+
+  window.showAdminDashboard = function() {
+    document.getElementById('adminDashboard').style.display = 'block';
+    document.getElementById('adminFloatBar').style.display = 'none';
+    document.getElementById('adminBtn').textContent = '⚙️ Admin';
+    updateParticipantTable();
+    renderAdminTeams();
+    renderAdminMatches();
+    updateLeaderboard();
+    renderAnnouncementsAdmin();
+    applyTournamentSettings();
+  };
+
+  window.showPublicPage = function() {
+    document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('adminFloatBar').style.display = 'flex';
+  };
+
+  window.logoutAdmin = function() {
     window.isAdmin = false;
     localStorage.removeItem('padel_admin');
     document.getElementById('adminDashboard').style.display = 'none';
+    document.getElementById('adminFloatBar').style.display = 'none';
     document.getElementById('adminLoginScreen').style.display = 'none';
-    document.getElementById('adminBtn').style.display = '';
+    document.getElementById('adminBtn').textContent = '🔒 Admin';
+    render();
     showToast('Logget ud');
   };
 
-  function renderAdminDashboard() {
-    const list = document.getElementById('adminParticipantList');
-    const count = document.getElementById('adminParticipantCount');
-    count.textContent = participants.length;
+  // Restore admin on load
+  if (localStorage.getItem('padel_admin') === 'true') {
+    window.isAdmin = true;
+    document.getElementById('adminBtn').textContent = '⚙️ Admin';
+    // Show floating bar on public page
+    setTimeout(() => { document.getElementById('adminFloatBar').style.display = 'flex'; }, 200);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Firebase listeners
+  // ═══════════════════════════════════════════════════════════════════
+  function normalizeMatches(matches) {
+    if (!matches) return [];
+    const arr = Array.isArray(matches) ? matches : Object.values(matches);
+    return arr.map(m => ({
+      id: m.id ?? 0, round: m.round ?? 1, position: m.position ?? 0,
+      teamA: m.teamA ?? null, teamB: m.teamB ?? null,
+      court: m.court ?? 1, status: m.status ?? 'waiting',
+      scoreA: m.scoreA ?? null, scoreB: m.scoreB ?? null, winner: m.winner ?? null, feedsInto: m.feedsInto ?? null,
+    }));
+  }
+  function normalizeTeams(teams) {
+    if (!teams) return [];
+    const arr = Array.isArray(teams) ? teams : Object.values(teams);
+    return arr.map(t => Array.isArray(t) ? t : Object.values(t));
+  }
+
+  setStatus('connecting','Forbinder...');
+
+  onValue(ref(db,'deltagere'), snap => {
+    participants = [];
+    snap.forEach(child => { participants.push({ _key: child.key, ...child.val() }); });
+    render();
+    if (window.isAdmin) updateParticipantTable();
+    setStatus('connected', 'Forbundet - ' + participants.length + ' tilmeldt');
+  }, err => setStatus('error','Fejl: ' + err.message));
+
+  onValue(ref(db,'tournaments/default'), snap => {
+    tournament = snap.val() || tournament;
+    applyTournamentSettings();
+  }, err => console.error('Tournament listener error:', err));
+
+  onValue(ref(db,'announcements'), snap => {
+    announcements = [];
+    snap.forEach(child => { announcements.push({ _key: child.key, ...child.val() }); });
+    announcements.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+    renderPublicAnnouncements();
+    if (window.isAdmin) renderAnnouncementsAdmin();
+  }, err => console.error('Announcements error:', err));
+
+  // Load saved bracket from Firebase
+  onValue(ref(db,'bracketData'), snap => {
+    if (snap.exists()) {
+      const data = snap.val();
+      if (data.teams) currentTeams = normalizeTeams(data.teams);
+      if (data.matches) allMatches = normalizeMatches(data.matches);
+      if (data.teamsVisible !== undefined) teamsVisible = data.teamsVisible;
+      if (data.qualRounds !== undefined) qualRounds = data.qualRounds;
+      if (document.getElementById('teamsVisible')) document.getElementById('teamsVisible').checked = teamsVisible;
+      renderTeams();
+      renderMatches();
+      renderPublicBracket();
+      updatePublicLeaderboard();
+      if (window.isAdmin) {
+        renderAdminTeams();
+        renderAdminMatches();
+        updateLeaderboard();
+      }
+    }
+  }, err => console.error('Bracket listener error:', err));
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Save bracket state
+  // ═══════════════════════════════════════════════════════════════════
+  async function saveBracketData() {
+    try {
+      await set(ref(db, 'bracketData'), {
+        teams: currentTeams,
+        matches: allMatches,
+        teamsVisible: teamsVisible,
+        qualRounds: qualRounds
+      });
+    } catch(err) { console.error('Save bracket error:', err); }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Tournament settings save
+  // ═══════════════════════════════════════════════════════════════════
+  window.saveTournamentSettings = async () => {
+    const courtCount = parseInt(document.getElementById('courtCount').value) || 4;
+    const courtNames = {};
+    for (let i = 1; i <= courtCount; i++) {
+      const el = document.getElementById('courtName' + i);
+      courtNames[i] = el ? el.value.trim() || ('Bane ' + i) : 'Bane ' + i;
+    }
+    tournament = {
+      name: document.getElementById('tournamentName').value,
+      dateTime: document.getElementById('tournamentDateTime').value,
+      location: document.getElementById('tournamentLocation').value,
+      maxParticipants: parseInt(document.getElementById('maxParticipants').value) || null,
+      courtCount: courtCount,
+      format: document.getElementById('tournamentFormat').value,
+      courtNames: courtNames,
+      showEmail: document.getElementById('showEmail').checked,
+      showTelefon: document.getElementById('showTelefon').checked
+    };
+    try {
+      await set(ref(db, 'tournaments/default'), tournament);
+      applyTournamentSettings();
+      showToast('✅ Indstillinger gemt');
+    } catch(err) { showToast('❌ Fejl: ' + err.message); }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Signup form
+  // ═══════════════════════════════════════════════════════════════════
+  document.getElementById('signupForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const navn = document.getElementById('navn').value.trim();
+    const alder = parseInt(document.getElementById('alder').value);
+    const email = document.getElementById('email')?.value?.trim() || '';
+    const telefon = document.getElementById('telefon')?.value?.trim() || '';
+    const niveau = document.querySelector('input[name="niveau"]:checked')?.value;
+    const makker = document.getElementById('makker').value.trim();
+    if (!navn || !alder || !niveau) return;
+    if (participants.find(p => p.navn.toLowerCase() === navn.toLowerCase())) return showToast('⚠️ ' + navn + ' er allerede tilmeldt');
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Gemmer...';
+    try {
+      await push(ref(db,'deltagere'), { navn, alder, email, telefon, niveau, makker, _ts: serverTimestamp() });
+      e.target.reset();
+      showToast('🎾 ' + navn + ' er tilmeldt!');
+    } catch(err) { showToast('❌ ' + err.message); }
+    btn.disabled = false; btn.textContent = '✅ Tilmeld mig';
+  });
+
+  window.removeParticipant = async key => {
+    if (!confirm('Fjern deltager?')) return;
+    await remove(ref(db,'deltagere/' + key));
+    showToast('Deltager fjernet');
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Admin participant table with inline editing
+  // ═══════════════════════════════════════════════════════════════════
+  function updateParticipantTable() {
+    const tbody = document.getElementById('participantTableBody');
+    const thead = document.getElementById('participantTableHead');
+    const showE = tournament.showEmail === true;
+    const showT = tournament.showTelefon === true;
+    const colCount = 4 + (showE ? 1 : 0) + (showT ? 1 : 0);
+
+    thead.innerHTML = `<tr><th>Navn</th>${showE ? '<th>Email</th>' : ''}${showT ? '<th>Telefon</th>' : ''}<th>Niveau</th><th>Onsket makker</th><th>Aktuelt</th></tr>`;
 
     if (!participants.length) {
-      list.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;">Ingen deltager endnu</div>';
+      tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;color:var(--muted);">Ingen deltagere</td></tr>`;
       return;
     }
-
-    list.innerHTML = participants.map((p, i) => {
-      const init = p.navn.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-      const col = colors[i % colors.length];
-      return `
-      <div style="background:white;border:1.5px solid var(--border);border-radius:10px;padding:16px;display:flex;gap:12px;align-items:flex-start;">
-        <div style="width:40px;height:40px;border-radius:50%;background:${col};color:white;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;">${init}</div>
-        <div style="flex:1;">
-          <div style="font-weight:700;font-size:1rem;">${p.navn}</div>
-          <div style="color:var(--muted);font-size:0.9rem;">${p.alder} år • ${p.niveau}</div>
-          ${p.makker ? `<div style="color:var(--green);font-size:0.9rem;margin-top:4px;">🤝 Ønsker makker: ${p.makker}</div>` : ''}
-        </div>
-        <button onclick="window.deleteParticipant('${p._key}')" style="background:#e53935;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600;">Slet</button>
-      </div>
-    `;
+    tbody.innerHTML = participants.map(p => {
+      if (editingRow === p._key) {
+        const partnerMatch = p.makker && !participants.find(x => x.navn.toLowerCase() === (p.makker||'').toLowerCase() && x._key !== p._key);
+        return `<tr class="inline-edit">
+          <td><input type="text" id="edit-navn-${p._key}" value="${p.navn}" style="width:100%;" /></td>
+          ${showE ? `<td><input type="email" id="edit-email-${p._key}" value="${p.email||''}" style="width:100%;" /></td>` : ''}
+          ${showT ? `<td><input type="tel" id="edit-telefon-${p._key}" value="${p.telefon||''}" style="width:100%;" /></td>` : ''}
+          <td><select id="edit-niveau-${p._key}">
+            <option value="Ny" ${p.niveau==='Ny'?'selected':''}>Ny</option>
+            <option value="Begynder" ${p.niveau==='Begynder'?'selected':''}>Begynder</option>
+            <option value="Ovet" ${p.niveau==='Ovet'||p.niveau==='Øvet'?'selected':''}>Ovet</option>
+          </select></td>
+          <td>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="edit-makker-${p._key}" value="${p.makker||''}" placeholder="Onsket makker" style="width:100%;" oninput="showPartnerSuggestions('${p._key}',this.value)" />
+              <div id="suggestions-${p._key}" class="autocomplete-list"></div>
+            </div>
+          </td>
+          <td style="white-space:nowrap;">
+            <button class="btn btn-small" onclick="saveEdit('${p._key}')">Gem</button>
+            <button class="btn btn-small btn-secondary" onclick="cancelEdit()" style="margin-left:4px;">Annuller</button>
+          </td>
+        </tr>`;
+      }
+      const partnerWarning = p.makker && !participants.find(x => x.navn.toLowerCase() === (p.makker||'').toLowerCase() && x._key !== p._key);
+      return `<tr>
+        <td><strong>${p.navn}</strong></td>
+        ${showE ? `<td>${p.email || '-'}</td>` : ''}
+        ${showT ? `<td>${p.telefon || '-'}</td>` : ''}
+        <td>${p.niveau}</td>
+        <td>${p.makker ? p.makker + (partnerWarning ? ' <span style="color:#e65100;" title="Matcher ingen deltager">⚠️</span>' : ' ✅') : '-'}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-small" onclick="startEdit('${p._key}')">Rediger</button>
+          <button class="btn btn-small" onclick="softDeleteParticipant('${p._key}')" style="background:#e53935;margin-left:4px;">Slet</button>
+        </td>
+      </tr>`;
     }).join('');
   }
 
-  window.deleteParticipant = (key) => {
-    const p = participants.find(x => x._key === key);
-    if (p && confirm(`Slet ${p.navn}?`)) {
-      remove(ref(db, 'deltagere/' + key));
-      renderAdminDashboard();
-    }
+  window.startEdit = (key) => { editingRow = key; updateParticipantTable(); };
+  window.cancelEdit = () => { editingRow = null; updateParticipantTable(); };
+
+  window.saveEdit = async (key) => {
+    const navn = document.getElementById('edit-navn-' + key)?.value?.trim();
+    const email = document.getElementById('edit-email-' + key)?.value?.trim();
+    const telefon = document.getElementById('edit-telefon-' + key)?.value?.trim();
+    const niveau = document.getElementById('edit-niveau-' + key)?.value;
+    const makker = document.getElementById('edit-makker-' + key)?.value?.trim();
+    if (!navn) return showToast('⚠️ Navn er pakraevet');
+    try {
+      await update(ref(db, 'deltagere/' + key), { navn, email, telefon, niveau, makker });
+      editingRow = null;
+      showToast('✅ Opdateret');
+    } catch(err) { showToast('❌ ' + err.message); }
   };
 
-  function updateAdminUI() {
-    const btn = document.getElementById('adminBtn');
-    if (window.isAdmin) {
-      btn.onclick = window.logoutAdmin;
-    } else {
-      btn.onclick = window.openAdminLogin;
+  window.showPartnerSuggestions = (key, val) => {
+    const list = document.getElementById('suggestions-' + key);
+    if (!val || val.length < 1) { list.classList.remove('show'); return; }
+    const p = participants.find(x => x._key === key);
+    const matches = participants.filter(x => x._key !== key && x.navn.toLowerCase().includes(val.toLowerCase()));
+    if (!matches.length) { list.classList.remove('show'); return; }
+    list.innerHTML = matches.slice(0,5).map(m => `<div class="autocomplete-item" onclick="selectPartner('${key}','${m.navn}')">${m.navn} <span style="color:var(--muted);font-size:0.75rem;">(${m.niveau})</span></div>`).join('');
+    list.classList.add('show');
+  };
+
+  window.selectPartner = (key, name) => {
+    const input = document.getElementById('edit-makker-' + key);
+    if (input) input.value = name;
+    const list = document.getElementById('suggestions-' + key);
+    if (list) list.classList.remove('show');
+  };
+
+  window.softDeleteParticipant = (key) => {
+    const p = participants.find(x => x._key === key);
+    if (!p || !confirm('Slet ' + p.navn + '?')) return;
+    remove(ref(db, 'deltagere/' + key));
+    showToast(p.navn + ' slettet');
+  };
+
+  // Modals
+  window.openAddParticipantModal = () => { document.getElementById('addParticipantModal').classList.add('active'); };
+  window.closeAddParticipantModal = () => { document.getElementById('addParticipantModal').classList.remove('active'); };
+  window.openBulkImportModal = () => { document.getElementById('bulkImportModal').classList.add('active'); };
+  window.closeBulkImportModal = () => { document.getElementById('bulkImportModal').classList.remove('active'); };
+
+  window.handleAddParticipant = async (e) => {
+    e.preventDefault();
+    const navn = document.getElementById('modalNavn').value.trim();
+    const alder = parseInt(document.getElementById('modalAlder').value) || 0;
+    const niveau = document.getElementById('modalNiveau').value;
+    if (!navn || !niveau) return showToast('⚠️ Udfyld alle felter');
+    if (participants.find(p => p.navn.toLowerCase() === navn.toLowerCase())) return showToast('⚠️ Deltager findes allerede');
+    try {
+      await push(ref(db, 'deltagere'), { navn, alder, niveau, email: '', telefon: '', makker: '', _ts: serverTimestamp() });
+      showToast('✅ Deltager tilfojet');
+      document.querySelector('#addParticipantModal form').reset();
+      closeAddParticipantModal();
+    } catch(err) { showToast('❌ ' + err.message); }
+  };
+
+  window.handleBulkImport = () => {
+    const file = document.getElementById('bulkImportFile').files[0];
+    if (!file) return showToast('⚠️ Vaelg en CSV-fil');
+    Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (results) => {
+      let imported = 0;
+      for (const row of results.data) {
+        const navn = (row['Navn']||'').trim();
+        const niveau = (row['Niveau']||'Ny').trim();
+        if (!navn) continue;
+        if (participants.find(p => p.navn.toLowerCase() === navn.toLowerCase())) continue;
+        try { await push(ref(db, 'deltagere'), { navn, niveau, email: '', telefon: '', makker: '', _ts: serverTimestamp() }); imported++; } catch(err) {}
+      }
+      showToast('✅ ' + imported + ' deltagere importeret');
+      closeBulkImportModal();
+    }});
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Teams - generation with drag & drop
+  // ═══════════════════════════════════════════════════════════════════
+  function shuffle(a) { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
+
+  window.generateTeamsBalanced = () => {
+    if (participants.length < 2) return showToast('⚠️ Mindst 2 deltagere');
+    let assigned = new Set(), teams = [];
+    const pool = [...participants];
+    // Partner wishes
+    pool.forEach(p => {
+      if (assigned.has(p.navn)) return;
+      const wish = p.makker ? pool.find(q => q.navn.toLowerCase().includes(p.makker.toLowerCase()) && !assigned.has(q.navn) && q.navn!==p.navn) : null;
+      if (wish) { teams.push([p,wish]); assigned.add(p.navn); assigned.add(wish.navn); }
+    });
+    // Level-based pairing
+    const unassigned = pool.filter(p => !assigned.has(p.navn));
+    const byLevel = {};
+    ['Ny','Begynder','Ovet','Øvet'].forEach(l => { byLevel[l] = shuffle(unassigned.filter(p => p.niveau === l)); });
+    // Merge Ovet and Øvet
+    byLevel['Ovet'] = [...(byLevel['Ovet']||[]), ...(byLevel['Øvet']||[])];
+    delete byLevel['Øvet'];
+    Object.values(byLevel).forEach(tier => {
+      for (let i=0;i<tier.length;i+=2) {
+        if (i+1<tier.length) { teams.push([tier[i],tier[i+1]]); assigned.add(tier[i].navn); assigned.add(tier[i+1].navn); }
+      }
+    });
+    // Odd person out
+    unassigned.forEach(p => {
+      if (!assigned.has(p.navn)) {
+        const incomplete = teams.find(t => t.length === 1);
+        if (incomplete) incomplete.push(p);
+        else teams.push([p]);
+        assigned.add(p.navn);
+      }
+    });
+    currentTeams = teams;
+    allMatches = [];
+    saveBracketData();
+    renderAdminTeams();
+    showToast('🎲 ' + teams.length + ' hold genereret!');
+  };
+
+  window.clearTeams = () => {
+    if (!confirm('Nulstil alle hold og kampe?')) return;
+    currentTeams = []; allMatches = []; matchResults = {}; qualRounds = 0;
+    saveBracketData();
+    renderAdminTeams(); renderAdminMatches(); updateLeaderboard();
+    showToast('🔄 Nulstillet');
+  };
+
+  // Teams visibility toggle
+  document.getElementById('teamsVisible')?.addEventListener('change', (e) => {
+    teamsVisible = e.target.checked;
+    saveBracketData();
+    showToast(teamsVisible ? '👁 Hold er nu synlige' : '🔒 Hold er skjulte');
+  });
+
+  // Drag & drop for teams
+  let dragData = null;
+
+  window.dragStart = (teamIdx, playerKey, e) => {
+    dragData = { teamIdx, playerKey };
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.classList.add('dragging');
+  };
+  window.dragEnd = (e) => { e.target.classList.remove('dragging'); };
+  window.dragOver = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
+  window.dragLeave = (e) => { e.currentTarget.classList.remove('drag-over'); };
+  window.dropOnTeam = (targetTeamIdx, e) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    if (!dragData || dragData.teamIdx === targetTeamIdx) return;
+    const player = currentTeams[dragData.teamIdx].find(p => p._key === dragData.playerKey);
+    if (!player) return;
+    currentTeams[dragData.teamIdx] = currentTeams[dragData.teamIdx].filter(p => p._key !== dragData.playerKey);
+    if (!currentTeams[dragData.teamIdx].length) currentTeams.splice(dragData.teamIdx, 1);
+    // Recalculate target after possible splice
+    const target = currentTeams[targetTeamIdx] || currentTeams[currentTeams.length - 1];
+    if (target) target.push(player);
+    dragData = null;
+    saveBracketData();
+    renderAdminTeams();
+  };
+
+  window.removeFromTeam = (teamIdx, playerKey) => {
+    currentTeams[teamIdx] = currentTeams[teamIdx].filter(p => p._key !== playerKey);
+    if (!currentTeams[teamIdx].length) currentTeams.splice(teamIdx, 1);
+    saveBracketData();
+    renderAdminTeams();
+  };
+
+  window.addToIncompleteTeam = (playerKey) => {
+    const p = participants.find(x => x._key === playerKey);
+    if (!p) return;
+    // Find first team with < 2 members
+    const incomplete = currentTeams.find(t => t.length < 2);
+    if (incomplete) { incomplete.push(p); }
+    else { currentTeams.push([p]); }
+    saveBracketData();
+    renderAdminTeams();
+    showToast(p.navn + ' tilfojet');
+  };
+
+  function renderAdminTeams() {
+    const el = document.getElementById('adminTeamsList');
+    if (!currentTeams.length) { el.innerHTML='<div class="empty-state">Ingen hold endnu</div>'; return; }
+    const assigned = new Set();
+    currentTeams.forEach(t => t.forEach(p => assigned.add(p._key)));
+    const unassigned = participants.filter(p => !assigned.has(p._key));
+
+    el.innerHTML = '<div class="teams-grid">' + currentTeams.map((team,i)=>{
+      const levelAvg = team.length ? (team.reduce((sum,p) => sum + (levelScores[p.niveau]||1), 0) / team.length).toFixed(1) : 0;
+      return `<div class="team-card" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOnTeam(${i},event)">
+        <div class="team-header" style="background:${colors[i%colors.length]};display:flex;justify-content:space-between;align-items:center;">
+          <span>Hold ${i+1}</span>
+          <span style="font-size:0.7rem;opacity:0.9;">Niveau avg: ${levelAvg}</span>
+        </div>
+        <div class="team-members">
+          ${team.map(p=>`<div class="team-member-draggable" draggable="true" ondragstart="dragStart(${i},'${p._key}',event)" ondragend="dragEnd(event)">
+            <span>👤</span><span><strong>${p.navn}</strong> - ${p.niveau}</span>
+            <button onclick="removeFromTeam(${i},'${p._key}')" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#e53935;font-size:0.8rem;">✕</button>
+          </div>`).join('')}
+          ${team.length===1?'<div style="font-size:0.75rem;color:#e53935;padding:4px;">⚠️ Mangler partner</div>':''}
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+
+    if (unassigned.length) {
+      el.innerHTML += `<div style="margin-top:16px;padding:14px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:8px;">
+        <div style="font-weight:700;color:#e65100;margin-bottom:8px;">⚠️ ${unassigned.length} uden hold:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">${unassigned.map(p=>
+          `<div style="background:white;padding:6px 10px;border-radius:6px;border:1px solid #ffb74d;font-size:0.85rem;cursor:pointer;" onclick="addToIncompleteTeam('${p._key}')">${p.navn} <span style="color:#e65100;">+</span></div>`
+        ).join('')}</div>
+      </div>`;
     }
   }
-  // ── Render ─────────────────────────────────────────────────────────────────
+
+  // ═══════════════════════════════════════════════════════════════════
+  // BRACKET / KNOCKOUT tournament — alle hold spiller i første runde
+  // ═══════════════════════════════════════════════════════════════════
+  window.generateBracket = () => {
+    if (currentTeams.length < 2) return showToast('⚠️ Generer hold først');
+    qualRounds = 0;
+    const n = currentTeams.length;
+    const courtCount = tournament.courtCount || 4;
+    allMatches = [];
+    let matchId = 0;
+
+    // Runde 1: Alle hold spiller (seed 0 vs n-1, 1 vs n-2, osv.)
+    const r1count = Math.floor(n / 2);
+    for (let i = 0; i < r1count; i++) {
+      allMatches.push({
+        id: matchId++, round: 1, position: i,
+        teamA: i, teamB: n - 1 - i,
+        court: (i % courtCount) + 1,
+        status: 'scheduled', scoreA: null, scoreB: null, winner: null,
+        feedsInto: null
+      });
+    }
+
+    // Byg efterfølgende runder
+    let prevMatches = allMatches.filter(m => m.round === 1);
+    let pendingCarry = (n % 2 === 1) ? { type: 'team', team: Math.floor(n / 2) } : null;
+    let round = 1;
+
+    while (true) {
+      const advCount = prevMatches.length + (pendingCarry ? 1 : 0);
+      if (advCount <= 1) break;
+
+      const nextMatchCount = Math.floor(advCount / 2);
+      const nextRound = round + 1;
+      const nextRoundMatches = [];
+
+      for (let i = 0; i < nextMatchCount; i++) {
+        const m = {
+          id: matchId++, round: nextRound, position: i,
+          teamA: null, teamB: null,
+          court: (i % courtCount) + 1,
+          status: 'waiting', scoreA: null, scoreB: null, winner: null,
+          feedsInto: null
+        };
+        nextRoundMatches.push(m);
+        allMatches.push(m);
+      }
+
+      // Saml kilder: [match0, match1, ..., carry]
+      const sources = [];
+      prevMatches.forEach(m => sources.push({ type: 'match', match: m }));
+      if (pendingCarry) sources.push(pendingCarry);
+
+      let newCarry = null;
+      for (let i = 0; i < sources.length; i++) {
+        const targetIdx = Math.floor(i / 2);
+        if (targetIdx >= nextRoundMatches.length) {
+          newCarry = sources[i]; // ulige — rykker videre
+          break;
+        }
+        const slot = i % 2 === 0 ? 'A' : 'B';
+        const src = sources[i];
+        if (src.type === 'match') {
+          src.match.feedsInto = { matchId: nextRoundMatches[targetIdx].id, slot };
+        } else {
+          if (slot === 'A') nextRoundMatches[targetIdx].teamA = src.team;
+          else nextRoundMatches[targetIdx].teamB = src.team;
+        }
+      }
+
+      // Tjek om nogen kampe allerede har begge hold
+      nextRoundMatches.forEach(m => {
+        if (m.teamA != null && m.teamB != null && m.status === 'waiting') m.status = 'scheduled';
+      });
+
+      pendingCarry = newCarry;
+      prevMatches = nextRoundMatches;
+      round++;
+    }
+
+    saveBracketData();
+    renderAdminMatches();
+    const realMatches = allMatches.filter(m => m.teamA !== -1 && m.teamB !== -1);
+    showToast('🏆 Turneringstræ genereret! ' + realMatches.length + ' kampe');
+  };
+
+  function advanceWinners() {
+    allMatches.forEach(match => {
+      if (match.winner != null && match.feedsInto) {
+        const target = allMatches.find(m => m.id === match.feedsInto.matchId);
+        if (target) {
+          if (match.feedsInto.slot === 'A') target.teamA = match.winner;
+          else target.teamB = match.winner;
+          if (target.teamA != null && target.teamB != null && target.status === 'waiting') {
+            target.status = 'scheduled';
+          }
+        }
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ALLE MOD ALLE (round-robin) → Slutspil
+  // ═══════════════════════════════════════════════════════════════════
+  window.generateSeededQual = () => {
+    if (currentTeams.length < 3) return showToast('⚠️ Mindst 3 hold');
+    const n = currentTeams.length;
+    const courtCount = tournament.courtCount || 4;
+    allMatches = [];
+    qualRounds = 1;
+    let matchId = 0;
+
+    const r1count = Math.floor(n / 2);
+    for (let i = 0; i < r1count; i++) {
+      allMatches.push({
+        id: matchId++, round: 1, position: i,
+        teamA: i, teamB: n - 1 - i,
+        court: (i % courtCount) + 1,
+        status: 'scheduled', scoreA: null, scoreB: null, winner: null,
+        feedsInto: null
+      });
+    }
+
+    saveBracketData();
+    renderAdminMatches();
+    const middleMsg = n % 2 === 1 ? ` Hold ${Math.floor(n/2)+1} venter på den svageste vinder.` : '';
+    showToast(`🎯 ${r1count} kvalifikationskampe!${middleMsg}`);
+  };
+
+  window.generateRoundRobin = () => {
+    if (currentTeams.length < 3) return showToast('⚠️ Mindst 3 hold for alle-mod-alle');
+    if (!confirm('Generer alle-mod-alle kvalifikation? Alle hold spiller mod hinanden.')) return;
+    const n = currentTeams.length;
+    const courtCount = tournament.courtCount || 4;
+    allMatches = [];
+    let matchId = 0;
+
+    const teams = Array.from({length: n}, (_, i) => i);
+    const hasOdd = n % 2 === 1;
+    if (hasOdd) teams.push(-1);
+    const total = teams.length;
+
+    for (let r = 0; r < total - 1; r++) {
+      let pos = 0;
+      for (let i = 0; i < total / 2; i++) {
+        const home = teams[i];
+        const away = teams[total - 1 - i];
+        if (home === -1 || away === -1) continue;
+        allMatches.push({
+          id: matchId++, round: r + 1, position: pos++,
+          teamA: home, teamB: away,
+          court: (pos % courtCount) + 1,
+          status: 'scheduled', scoreA: null, scoreB: null, winner: null,
+          feedsInto: null
+        });
+      }
+      const last = teams.pop();
+      teams.splice(1, 0, last);
+    }
+
+    qualRounds = total - 1;
+    saveBracketData();
+    renderAdminMatches();
+    showToast(`🔄 ${allMatches.length} kvalifikationskampe genereret!`);
+  };
+
+  window.generatePlayoffs = () => {
+    const qualMatches = allMatches.filter(m => m.round <= qualRounds);
+    if (qualMatches.some(m => m.status !== 'completed')) {
+      return showToast('⚠️ Alle kvalifikationskampe skal være afsluttet først');
+    }
+
+    let advancingTeams;
+
+    if (qualRounds === 1) {
+      // Seeded kvalifikation: vindere + midterhold (hvis ulige)
+      const n = currentTeams.length;
+      const winners = qualMatches
+        .filter(m => m.winner != null)
+        .map(m => ({
+          idx: m.winner,
+          diff: m.winner === m.teamA ? (m.scoreA - m.scoreB) : (m.scoreB - m.scoreA)
+        }));
+      winners.sort((a, b) => b.diff - a.diff); // bedste scorer først
+      advancingTeams = winners.map(w => w.idx);
+      if (n % 2 === 1) advancingTeams.push(Math.floor(n / 2)); // midterhold sidst (lavest seed)
+    } else {
+      // Alle mod alle: rangér alle hold
+      const stats = currentTeams.map((t, i) => ({ idx: i, points: 0, diff: 0, wins: 0 }));
+      qualMatches.forEach(m => {
+        if (m.teamA != null && m.teamB != null && stats[m.teamA] && stats[m.teamB]) {
+          const sa = m.scoreA || 0, sb = m.scoreB || 0;
+          stats[m.teamA].diff += sa - sb; stats[m.teamB].diff += sb - sa;
+          if (sa > sb) { stats[m.teamA].points += 3; stats[m.teamA].wins++; }
+          else if (sb > sa) { stats[m.teamB].points += 3; stats[m.teamB].wins++; }
+          else { stats[m.teamA].points += 1; stats[m.teamB].points += 1; }
+        }
+      });
+      const ranked = stats.sort((a, b) => b.points - a.points || b.diff - a.diff || b.wins - a.wins);
+      advancingTeams = ranked.slice(0, Math.min(4, currentTeams.length)).map(t => t.idx);
+    }
+
+    generateBracketForTeams(advancingTeams);
+    const names = advancingTeams.map((t, i) => `#${i+1} Hold ${t+1}`).join(', ');
+    showToast(`🏆 Slutspil: ${names}`);
+  };
+
+  function generateBracketForTeams(teamIndices) {
+    const n = teamIndices.length;
+    if (n < 2) return;
+    const courtCount = tournament.courtCount || 4;
+    let matchId = allMatches.length;
+    let round = qualRounds + 1;
+
+    // Ulige: bedste hold (index 0) rykker videre, svagere spiller mod bunden
+    // Lige: standard seeding (0 vs n-1, 1 vs n-2)
+    const playoffR1 = [];
+    let pendingCarry = null;
+
+    if (n % 2 === 1) {
+      pendingCarry = { type: 'team', team: teamIndices[0] }; // bedste rykker videre
+      const rest = teamIndices.slice(1);
+      const rn = rest.length;
+      for (let i = 0; i < Math.floor(rn / 2); i++) {
+        const m = { id: matchId++, round, position: i, teamA: rest[i], teamB: rest[rn - 1 - i],
+          court: (i % courtCount) + 1, status: 'scheduled', scoreA: null, scoreB: null, winner: null, feedsInto: null };
+        playoffR1.push(m); allMatches.push(m);
+      }
+    } else {
+      for (let i = 0; i < n / 2; i++) {
+        const m = { id: matchId++, round, position: i, teamA: teamIndices[i], teamB: teamIndices[n - 1 - i],
+          court: (i % courtCount) + 1, status: 'scheduled', scoreA: null, scoreB: null, winner: null, feedsInto: null };
+        playoffR1.push(m); allMatches.push(m);
+      }
+    }
+
+    // Byg efterfølgende runder
+    let prevMatches = playoffR1;
+    while (true) {
+      const advCount = prevMatches.length + (pendingCarry ? 1 : 0);
+      if (advCount <= 1) break;
+      round++;
+      const nextCount = Math.floor(advCount / 2);
+      const nextMatches = [];
+      for (let i = 0; i < nextCount; i++) {
+        const m = { id: matchId++, round, position: i, teamA: null, teamB: null,
+          court: (i % courtCount) + 1, status: 'waiting', scoreA: null, scoreB: null, winner: null, feedsInto: null };
+        nextMatches.push(m); allMatches.push(m);
+      }
+      const sources = [];
+      prevMatches.forEach(m => sources.push({ type: 'match', match: m }));
+      if (pendingCarry) sources.push(pendingCarry);
+      let newCarry = null;
+      for (let i = 0; i < sources.length; i++) {
+        const ti = Math.floor(i / 2);
+        if (ti >= nextMatches.length) { newCarry = sources[i]; break; }
+        const slot = i % 2 === 0 ? 'A' : 'B';
+        const src = sources[i];
+        if (src.type === 'match') src.match.feedsInto = { matchId: nextMatches[ti].id, slot };
+        else { if (slot === 'A') nextMatches[ti].teamA = src.team; else nextMatches[ti].teamB = src.team; }
+      }
+      nextMatches.forEach(m => { if (m.teamA != null && m.teamB != null && m.status === 'waiting') m.status = 'scheduled'; });
+      pendingCarry = newCarry;
+      prevMatches = nextMatches;
+    }
+
+    saveBracketData();
+    renderAdminMatches();
+    updateLeaderboard();
+  }
+
+  function getRoundName(round, totalRounds) {
+    if (qualRounds > 0 && round <= qualRounds) {
+      return 'Kvalifikation — Runde ' + round;
+    }
+    const fromFinal = totalRounds - round;
+    if (fromFinal === 0) return 'Finale';
+    if (fromFinal === 1) return 'Semifinaler';
+    if (fromFinal === 2) return 'Kvartfinaler';
+    return 'Runde ' + round;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Admin matches rendering with round headers
+  // ═══════════════════════════════════════════════════════════════════
+  let activeRoundFilter = null;
+
+  function renderAdminMatches() {
+    const el = document.getElementById('adminMatchesList');
+    const pills = document.getElementById('adminFilterPills');
+    if (!allMatches.length) { el.innerHTML='<div class="empty-state">Generer turneringstrae forst</div>'; pills.innerHTML=''; return; }
+
+    const rounds = {};
+    allMatches.forEach(m => { if (!rounds[m.round]) rounds[m.round] = []; rounds[m.round].push(m); });
+    const roundNums = Object.keys(rounds).map(Number).sort((a,b) => a - b);
+    const totalRounds = roundNums.length;
+
+    // Filter pills
+    if (qualRounds > 0) {
+      const qualNums = roundNums.filter(r => r <= qualRounds);
+      const playoffNums = roundNums.filter(r => r > qualRounds);
+      pills.innerHTML = `<div class="filter-pill ${!activeRoundFilter?'active':''}" onclick="filterRound(null)">Alle</div>` +
+        `<div class="filter-pill ${activeRoundFilter==='qual'?'active':''}" onclick="filterRound('qual')">Kvalifikation</div>` +
+        playoffNums.map(r => `<div class="filter-pill ${activeRoundFilter===r?'active':''}" onclick="filterRound(${r})">${getRoundName(r,roundNums.length)}</div>`).join('');
+    } else {
+      pills.innerHTML = `<div class="filter-pill ${!activeRoundFilter?'active':''}" onclick="filterRound(null)">Alle</div>` +
+        roundNums.map(r => `<div class="filter-pill ${activeRoundFilter===r?'active':''}" onclick="filterRound(${r})">${getRoundName(r,roundNums.length)}</div>`).join('');
+    }
+
+    const filteredRounds = activeRoundFilter === 'qual'
+      ? roundNums.filter(r => r <= qualRounds)
+      : (activeRoundFilter ? [activeRoundFilter] : roundNums);
+    let html = '';
+
+    filteredRounds.forEach(r => {
+      const roundMatches = rounds[r] || [];
+      html += `<div class="round-header">${getRoundName(r, totalRounds)}</div>`;
+
+      // Group by court slots (how many can play at once)
+      const courtCount = tournament.courtCount || 4;
+      const slots = [];
+      for (let i = 0; i < roundMatches.length; i += courtCount) {
+        slots.push(roundMatches.slice(i, i + courtCount));
+      }
+
+      slots.forEach((slotMatches, slotIdx) => {
+        const realSlotMatches = slotMatches.filter(m => m.teamA !== -1 && m.teamB !== -1);
+        if (!realSlotMatches.length) return;
+        const isQualRound = qualRounds > 0 && r <= qualRounds;
+        if (isQualRound && slots.filter(s => s.some(m => m.teamA !== -1 && m.teamB !== -1)).length > 1) {
+          html += `<div style="font-size:0.78rem;font-weight:600;color:var(--muted);margin:8px 0 4px;padding-left:4px;">Pulje ${slotIdx+1}</div>`;
+        }
+        html += '<div style="display:grid;gap:8px;">';
+        slotMatches.forEach(match => {
+          if (match.teamA === -1 || match.teamB === -1) return;
+
+          const teamAName = match.teamA != null && match.teamA >= 0 && currentTeams[match.teamA]
+            ? currentTeams[match.teamA].map(p=>p.navn).join(' & ') : 'Afventer...';
+          const teamBName = match.teamB != null && match.teamB >= 0 && currentTeams[match.teamB]
+            ? currentTeams[match.teamB].map(p=>p.navn).join(' & ') : 'Afventer...';
+          const icon = match.status==='completed'?'✅':match.status==='in-progress'?'🔴':match.status==='waiting'?'⏳':'📋';
+
+          let actionHTML = '';
+          if (match.status === 'completed') {
+            actionHTML = `<strong style="font-size:1.1rem;">${match.scoreA||0} - ${match.scoreB||0}</strong>`;
+          } else if (match.status === 'in-progress') {
+            actionHTML = `<div style="display:flex;align-items:center;gap:6px;">
+              <button onclick="finishMatch(${match.id})" class="btn btn-small" style="background:#e53935;">Færdig</button>
+              <input type="number" min="0" max="99" value="${match.scoreA??0}" onchange="setMatchScore(${match.id},this.value,'A')" style="width:48px;padding:6px;border:1.5px solid var(--border);border-radius:6px;text-align:center;font-weight:700;" />
+              <span style="font-weight:700;">-</span>
+              <input type="number" min="0" max="99" value="${match.scoreB??0}" onchange="setMatchScore(${match.id},this.value,'B')" style="width:48px;padding:6px;border:1.5px solid var(--border);border-radius:6px;text-align:center;font-weight:700;" />
+            </div>`;
+          } else if (match.status === 'scheduled') {
+            actionHTML = `<button onclick="startMatch(${match.id})" class="btn btn-small">Start</button>`;
+          } else {
+            actionHTML = '<span style="color:var(--muted);font-size:0.8rem;">Afventer</span>';
+          }
+
+          const teamALabel = match.teamA != null && match.teamA >= 0 ? 'Hold '+(match.teamA+1) : 'Afventer';
+          const teamBLabel = match.teamB != null && match.teamB >= 0 ? 'Hold '+(match.teamB+1) : 'Afventer';
+
+          html += `<div style="padding:12px;border:1.5px solid ${match.status==='in-progress'?'#e65100':match.status==='completed'?'var(--green-light)':'var(--border)'};border-radius:8px;background:${match.status==='in-progress'?'#fff8f0':'var(--gray)'};display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;gap:8px;flex:1;">
+              <span style="font-size:1.1rem;">${icon}</span>
+              <div>
+                <div style="font-weight:700;font-size:0.85rem;"><span class="bane-tag">${getCourtName(match.court)}</span> ${teamALabel} vs ${teamBLabel}</div>
+                <div style="font-size:0.78rem;color:var(--muted);">${teamAName} mod ${teamBName}</div>
+              </div>
+            </div>
+            ${actionHTML}
+          </div>`;
+        });
+        html += '</div>';
+      });
+    });
+
+    // Check for tournament winner
+    const finalMatch = allMatches.find(m => m.round === totalRounds);
+    if (finalMatch && finalMatch.status === 'completed' && finalMatch.winner !== null && currentTeams[finalMatch.winner]) {
+      const winnerNames = currentTeams[finalMatch.winner].map(p => p.navn).join(' & ');
+      html += `<div class="winner-banner"><div class="trophy">🏆</div><h3>VINDEREN</h3><p style="font-size:1.1rem;font-weight:700;">Hold ${finalMatch.winner+1}: ${winnerNames}</p></div>`;
+    }
+
+    // "Generer slutspil" knap når alle kvalifikationskampe er færdige
+    if (qualRounds > 0) {
+      const qualMatches = allMatches.filter(m => m.round <= qualRounds);
+      const playoffExists = allMatches.some(m => m.round > qualRounds);
+      const allQualDone = qualMatches.every(m => m.status === 'completed');
+      const remaining = qualMatches.filter(m => m.status !== 'completed').length;
+      if (allQualDone && !playoffExists) {
+        html += `<div style="margin-top:20px;text-align:center;padding:20px;background:var(--green-pale);border-radius:12px;border:2px solid var(--green-light);">
+          <p style="font-weight:700;color:var(--green);margin-bottom:12px;font-size:1rem;">✅ Alle kvalifikationskampe er færdige!</p>
+          <p style="color:var(--muted);font-size:0.85rem;margin-bottom:14px;">${qualRounds===1 ? 'Vindere rangeres efter score. Bedste vinder rykker videre, svageste møder midterholdet.' : 'Top 4 hold fra ranglisten går videre til slutspillet.'}</p>
+          <button class="btn" onclick="generatePlayoffs()" style="max-width:300px;margin:0 auto;">🏆 Generer slutspil fra rangliste</button>
+        </div>`;
+      } else if (!playoffExists && !allQualDone) {
+        html += `<div style="margin-top:16px;text-align:center;padding:12px;background:#fff3e0;border-radius:8px;font-size:0.85rem;color:#e65100;">
+          ⏳ ${remaining} kvalifikationskamp${remaining !== 1 ? 'e' : ''} mangler før slutspillet kan genereres
+        </div>`;
+      }
+    }
+
+    el.innerHTML = html;
+  }
+
+  window.filterRound = (r) => { activeRoundFilter = r; renderAdminMatches(); };
+
+  window.startMatch = (matchId) => {
+    const m = allMatches.find(x => x.id === matchId);
+    if (m) { m.status = 'in-progress'; m.scoreA = m.scoreA || 0; m.scoreB = m.scoreB || 0; saveBracketData(); renderAdminMatches(); }
+  };
+
+  window.setMatchScore = (matchId, score, team) => {
+    const m = allMatches.find(x => x.id === matchId);
+    if (m) { if (team === 'A') m.scoreA = parseInt(score)||0; else m.scoreB = parseInt(score)||0; saveBracketData(); }
+  };
+
+  window.finishMatch = (matchId) => {
+    const m = allMatches.find(x => x.id === matchId);
+    if (!m) return;
+    if (m.scoreA == null || m.scoreB == null) return showToast('⚠️ Indtast resultatet først');
+    if (m.scoreA === m.scoreB) return showToast('⚠️ Uafgjort ikke tilladt i knockout');
+    m.status = 'completed';
+    m.winner = m.scoreA > m.scoreB ? m.teamA : m.teamB;
+    advanceWinners();
+    updateLeaderboard();
+    saveBracketData();
+    renderAdminMatches();
+    showToast('✅ Resultat gemt — vinder rykker videre');
+  };
+
+  window.setMatchStatus = async (matchId, status) => {
+    const m = allMatches.find(x => x.id === matchId);
+    if (!m) return;
+    m.status = status;
+    if (status === 'completed' && m.scoreA != null && m.scoreB != null) {
+      m.winner = m.scoreA > m.scoreB ? m.teamA : m.teamB;
+      advanceWinners();
+      updateLeaderboard();
+      showToast('✅ Resultat gemt — vinder rykker videre');
+    }
+    saveBracketData();
+    renderAdminMatches();
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Public side rendering
+  // ═══════════════════════════════════════════════════════════════════
   function render() {
-    const list  = document.getElementById('participantList');
+    const list = document.getElementById('participantList');
     const count = document.getElementById('countDisplay');
     count.textContent = participants.length + ' deltager' + (participants.length !== 1 ? 'e' : '');
     if (!participants.length) { list.innerHTML = '<div class="empty-state">Ingen tilmeldte endnu 🎾</div>'; return; }
     list.innerHTML = participants.map((p,i) => {
       const init = p.navn.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-      const col  = colors[i % colors.length];
-      const tag  = {Ny:'tag-ny',Begynder:'tag-begynder',Øvet:'tag-øvet'}[p.niveau]||'tag-ny';
-      const makkerText = window.isAdmin && p.makker ? ' · Ønsker: '+p.makker : '';
+      const col = colors[i%colors.length];
+      const tag = {Ny:'tag-ny',Begynder:'tag-begynder',Ovet:'tag-øvet','Øvet':'tag-øvet'}[p.niveau]||'tag-ny';
       return `<div class="participant">
         <div class="avatar" style="background:${col}">${init}</div>
         <div class="participant-info">
           <div class="participant-name">${p.navn}</div>
-          <div class="participant-meta">${p.alder} år${makkerText}</div>
+          <div class="participant-meta">${p.alder ? p.alder + ' ar' : ''}${p.email ? ' - ' + p.email : ''}</div>
         </div>
         <span class="level-tag ${tag}">${p.niveau}</span>
-        ${window.isAdmin ? `<button class="delete-btn" onclick="removeParticipant('${p._key}')" title="Fjern">✕</button>` : ''}
       </div>`;
     }).join('');
+    updatePublicLeaderboard();
   }
-
-  // ── Teams ──────────────────────────────────────────────────────────────────
-  function shuffle(a) {
-    const b = [...a];
-    for (let i=b.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; }
-    return b;
-  }
-
-  window.generateTeams = () => {
-    if (participants.length < 2) return showToast('⚠️ Mindst 2 deltagere kræves');
-    let assigned = new Set(), teams = [], pool = shuffle([...participants]);
-    pool.forEach(p => {
-      if (assigned.has(p.navn)) return;
-      const wish = p.makker ? participants.find(q =>
-        q.navn.toLowerCase().includes(p.makker.toLowerCase()) && !assigned.has(q.navn) && q.navn!==p.navn) : null;
-      if (wish) { teams.push([p,wish]); assigned.add(p.navn); assigned.add(wish.navn); }
-    });
-    pool.forEach(p => { if (!assigned.has(p.navn)) { teams.push([p]); assigned.add(p.navn); } });
-    let i=0;
-    while (i < teams.length) {
-      if (teams[i].length === 1) {
-        const next = teams.findIndex((t,j)=>j>i&&t.length===1);
-        if (next !== -1) { teams[i]=[teams[i][0],teams[next][0]]; teams.splice(next,1); }
-      } i++;
-    }
-    currentTeams = teams;
-    renderTeams(); renderMatches();
-    showToast('🎲 Hold genereret!');
-    switchTab('hold', document.querySelectorAll('.tab')[1]);
-  };
 
   function renderTeams() {
     const el = document.getElementById('teamsList');
-    if (!currentTeams.length) { el.innerHTML='<div class="empty-state">Ingen hold endnu</div>'; return; }
-    el.innerHTML = '<div class="teams-grid">' + currentTeams.map((team,i)=>`
-      <div class="team-card">
+    if (!teamsVisible || !currentTeams.length) { el.innerHTML='<div class="empty-state">Hold er ikke offentliggjort endnu</div>'; return; }
+    el.innerHTML = '<div class="teams-grid">' + currentTeams.map((team,i) =>
+      `<div class="team-card">
         <div class="team-header" style="background:${colors[i%colors.length]}">Hold ${i+1}</div>
         <div class="team-members">
-          ${team.map(p=>`<div class="team-member"><span>👤</span><span><strong>${p.navn}</strong> · ${p.alder} år · ${p.niveau}</span></div>`).join('')}
-          ${team.length===1?'<div style="font-size:0.78rem;color:#999;margin-top:4px;">⚠️ Mangler makker</div>':''}
+          ${team.map(p=>`<div class="team-member"><span>👤</span><span><strong>${p.navn}</strong> - ${p.alder?p.alder+' ar':''} - ${p.niveau}</span></div>`).join('')}
+          ${team.length===1?'<div style="font-size:0.78rem;color:#999;">⚠️ Mangler makker</div>':''}
         </div>
-      </div>`).join('') + '</div>';
+      </div>`
+    ).join('') + '</div>';
   }
 
   function renderMatches() {
     const el = document.getElementById('matchesList');
-    if (currentTeams.length < 2) { el.innerHTML='<div class="empty-state">Generer hold for at se kampplanen</div>'; return; }
-    let matches=[];
-    for(let i=0;i<currentTeams.length;i++) for(let j=i+1;j<currentTeams.length;j++) matches.push([i,j]);
-    el.innerHTML = matches.map(([a,b])=>{
-      const n1=currentTeams[a].map(p=>p.navn.split(' ')[0]).join(' & ');
-      const n2=currentTeams[b].map(p=>p.navn.split(' ')[0]).join(' & ');
-      return `<div class="match">
-        <div><div class="match-num">Hold ${a+1}</div><div class="match-team">${n1}</div></div>
-        <div class="match-vs">VS</div>
-        <div><div class="match-num">Hold ${b+1}</div><div class="match-team">${n2}</div></div>
+    if (!teamsVisible || !currentTeams.length || !allMatches.length) {
+      el.innerHTML='<div class="empty-state">Kampplanen vises nar hold er offentliggjort</div>'; return;
+    }
+    const rounds = {};
+    allMatches.forEach(m => { if (!rounds[m.round]) rounds[m.round] = []; rounds[m.round].push(m); });
+    const roundNums = Object.keys(rounds).map(Number).sort((a,b)=>a-b);
+    const totalRounds = roundNums.length;
+
+    let html = '';
+    roundNums.forEach(r => {
+      html += `<div style="font-weight:700;color:var(--green);margin:12px 0 6px;font-size:0.9rem;">${getRoundName(r,totalRounds)}</div>`;
+      rounds[r].forEach(m => {
+        if (m.teamA === -1 || m.teamB === -1) return;
+        if (m.teamA == null && m.teamB == null) return;
+        const n1 = m.teamA != null && m.teamA >= 0 && currentTeams[m.teamA] ? currentTeams[m.teamA].map(p=>p.navn.split(' ')[0]).join(' & ') : 'Afventer';
+        const n2 = m.teamB != null && m.teamB >= 0 && currentTeams[m.teamB] ? currentTeams[m.teamB].map(p=>p.navn.split(' ')[0]).join(' & ') : 'Afventer';
+        const teamALabel = m.teamA != null && m.teamA >= 0 ? 'Hold '+(m.teamA+1) : 'Afventer';
+        const teamBLabel = m.teamB != null && m.teamB >= 0 ? 'Hold '+(m.teamB+1) : 'Afventer';
+        const score = m.status === 'completed' ? `${m.scoreA} - ${m.scoreB}` : (m.status === 'in-progress' ? '🔴 I gang' : 'VS');
+        const scoreColor = m.status === 'completed' ? '#4caf50' : (m.status === 'in-progress' ? '#e65100' : 'var(--muted)');
+        const bane = `<span class="bane-tag" style="margin-bottom:4px;">${getCourtName(m.court)}</span>`;
+        html += `<div class="match">
+          <div><div class="match-num">${bane} ${teamALabel}</div><div class="match-team">${n1}</div></div>
+          <div class="match-vs" style="font-weight:700;color:${scoreColor};">${score}</div>
+          <div><div class="match-num">${teamBLabel}</div><div class="match-team">${n2}</div></div>
+        </div>`;
+      });
+    });
+
+    // Winner
+    const finalMatch = allMatches.find(m => m.round === totalRounds);
+    if (finalMatch && finalMatch.status === 'completed' && finalMatch.winner !== null && currentTeams[finalMatch.winner]) {
+      const wn = currentTeams[finalMatch.winner].map(p=>p.navn).join(' & ');
+      html += `<div class="winner-banner"><div class="trophy">🏆</div><h3>VINDEREN!</h3><p style="font-size:1.1rem;font-weight:700;">Hold ${finalMatch.winner+1}: ${wn}</p></div>`;
+    }
+    el.innerHTML = html;
+  }
+
+  function renderPublicBracket() {
+    const el = document.getElementById('publicBracket');
+    if (!teamsVisible || !allMatches.length) { el.innerHTML = ''; return; }
+
+    // Only show playoff rounds in bracket (skip qualification)
+    const playoffMatches = qualRounds > 0
+      ? allMatches.filter(m => m.round > qualRounds && m.teamA !== -1 && m.teamB !== -1)
+      : allMatches.filter(m => m.teamA !== -1 && m.teamB !== -1);
+    if (!playoffMatches.length) { el.innerHTML = ''; return; }
+
+    const rounds = {};
+    playoffMatches.forEach(m => { if (!rounds[m.round]) rounds[m.round] = []; rounds[m.round].push(m); });
+    const roundNums = Object.keys(rounds).map(Number).sort((a,b)=>a-b);
+    const totalRounds = qualRounds > 0
+      ? Math.max(...allMatches.map(m => m.round))
+      : roundNums.length;
+
+    function renderMatch(m) {
+      const cls = m.status === 'completed' ? 'completed' : (m.status === 'in-progress' ? 'active' : '');
+      const n1 = m.teamA != null && m.teamA >= 0 && currentTeams[m.teamA] ? currentTeams[m.teamA].map(p=>p.navn.split(' ')[0]).join(' & ') : 'Afventer';
+      const n2 = m.teamB != null && m.teamB >= 0 && currentTeams[m.teamB] ? currentTeams[m.teamB].map(p=>p.navn.split(' ')[0]).join(' & ') : 'Afventer';
+      const w1 = m.winner === m.teamA && m.status==='completed' ? 'winner' : '';
+      const w2 = m.winner === m.teamB && m.status==='completed' ? 'winner' : '';
+      return `<div class="bracket-match ${cls}">
+        <div class="bracket-bane">${getCourtName(m.court)}</div>
+        <div class="bracket-team-row ${w1}"><span>${n1}</span><span class="score">${m.status==='completed'?(m.scoreA||0):''}</span></div>
+        <div class="bracket-team-row ${w2}"><span>${n2}</span><span class="score">${m.status==='completed'?(m.scoreB||0):''}</span></div>
       </div>`;
+    }
+
+    let html = '<div class="bracket-container"><div class="bracket">';
+    roundNums.forEach((r, ri) => {
+      html += `<div class="bracket-round"><div class="bracket-round-title">${getRoundName(r, totalRounds)}</div><div class="bracket-matches">`;
+      rounds[r].forEach(m => { html += renderMatch(m); });
+      html += '</div></div>';
+
+      // Add connector lines between this round and next
+      if (ri < roundNums.length - 1) {
+        const matchCount = rounds[r].length;
+        const pairs = Math.floor(matchCount / 2);
+        if (pairs > 0) {
+          html += '<div class="bracket-connector">';
+          for (let p = 0; p < pairs; p++) {
+            html += '<div class="bracket-connector-pair"><div class="conn-top"></div><div class="conn-bot"></div></div>';
+          }
+          if (matchCount % 2 === 1) {
+            html += '<div style="flex:1;display:flex;align-items:center;"><div style="width:100%;height:1.5px;background:var(--border);"></div></div>';
+          }
+          html += '</div>';
+        }
+      }
+    });
+    html += '</div></div>';
+    el.innerHTML = html;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Leaderboard (team-based)
+  // ═══════════════════════════════════════════════════════════════════
+  function updateLeaderboard() {
+    const el = document.getElementById('leaderboardBody');
+    if (!currentTeams.length) { el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater</td></tr>'; return; }
+    const stats = currentTeams.map((t,i) => ({ idx:i, names:t.map(p=>p.navn).join(' & '), points:0, wins:0, losses:0, games:0 }));
+    allMatches.forEach(m => {
+      if (m.status==='completed' && m.teamA!=null && m.teamB!=null && m.scoreA!=null && m.scoreB!=null && stats[m.teamA] && stats[m.teamB]) {
+        stats[m.teamA].games++; stats[m.teamB].games++;
+        if (m.scoreA>m.scoreB) { stats[m.teamA].points+=3; stats[m.teamA].wins++; stats[m.teamB].losses++; }
+        else if (m.scoreB>m.scoreA) { stats[m.teamB].points+=3; stats[m.teamB].wins++; stats[m.teamA].losses++; }
+        else { stats[m.teamA].points++; stats[m.teamB].points++; }
+      }
+    });
+    const sorted = stats.slice().sort((a,b) => b.points-a.points || b.wins-a.wins);
+    if (!sorted.some(s=>s.games>0)) { el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater</td></tr>'; return; }
+    el.innerHTML = sorted.map((s,i) => {
+      const wr = s.games ? ((s.wins/s.games)*100).toFixed(1)+'%' : '-';
+      return `<tr ${s.games?'':'style="opacity:0.5;"'}><td><strong>${i+1}</strong></td><td><strong>Hold ${s.idx+1}</strong><br><span style="font-size:0.75rem;color:var(--muted);">${s.names}</span></td><td style="text-align:center;"><strong>${s.points}</strong></td><td style="text-align:center;">${s.wins}</td><td style="text-align:center;">${s.losses}</td><td style="text-align:center;">${wr}</td></tr>`;
     }).join('');
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  function updatePublicLeaderboard() {
+    const el = document.getElementById('publicLeaderboardBody');
+    if (!currentTeams.length || !teamsVisible) { el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater endnu</td></tr>'; return; }
+    const stats = currentTeams.map((t,i) => ({ idx:i, names:t.map(p=>p.navn).join(' & '), points:0, wins:0, losses:0, games:0 }));
+    allMatches.forEach(m => {
+      if (m.status==='completed' && m.teamA!=null && m.teamB!=null && m.scoreA!=null && m.scoreB!=null && stats[m.teamA] && stats[m.teamB]) {
+        stats[m.teamA].games++; stats[m.teamB].games++;
+        if (m.scoreA>m.scoreB) { stats[m.teamA].points+=3; stats[m.teamA].wins++; stats[m.teamB].losses++; }
+        else if (m.scoreB>m.scoreA) { stats[m.teamB].points+=3; stats[m.teamB].wins++; stats[m.teamA].losses++; }
+        else { stats[m.teamA].points++; stats[m.teamB].points++; }
+      }
+    });
+    const sorted = stats.slice().sort((a,b) => b.points-a.points || b.wins-a.wins);
+    if (!sorted.some(s=>s.games>0)) { el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater endnu</td></tr>'; return; }
+    el.innerHTML = sorted.map((s,i) => {
+      const wr = s.games ? ((s.wins/s.games)*100).toFixed(1)+'%' : '-';
+      return `<tr ${s.games?'':'style="opacity:0.5;"'}><td><strong>${i+1}</strong></td><td><strong>Hold ${s.idx+1}</strong><br><span style="font-size:0.75rem;color:var(--muted);">${s.names}</span></td><td style="text-align:center;"><strong>${s.points}</strong></td><td style="text-align:center;">${s.wins}</td><td style="text-align:center;">${s.losses}</td><td style="text-align:center;">${wr}</td></tr>`;
+    }).join('');
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Announcements (public bulletin board)
+  // ═══════════════════════════════════════════════════════════════════
+  window.postAnnouncement = async () => {
+    const text = document.getElementById('messageText').value.trim();
+    if (!text) return showToast('⚠️ Skriv en besked');
+    try {
+      await push(ref(db, 'announcements'), { text, createdAt: Date.now(), active: true });
+      document.getElementById('messageText').value = '';
+      showToast('📢 Opslag offentliggjort');
+    } catch(err) { showToast('❌ ' + err.message); }
+  };
+
+  window.deleteAnnouncement = async (key) => {
+    if (!confirm('Slet opslag?')) return;
+    await remove(ref(db, 'announcements/' + key));
+    showToast('Opslag slettet');
+  };
+
+  function renderPublicAnnouncements() {
+    const el = document.getElementById('publicAnnouncements');
+    const active = announcements.filter(a => a.active !== false);
+    if (!active.length) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    el.innerHTML = `<div class="announcement-banner">
+      <div style="font-weight:700;color:#e65100;margin-bottom:6px;font-size:0.9rem;">📢 Beskeder fra arrangoren</div>
+      ${active.map(a => {
+        const t = new Date(a.createdAt).toLocaleString('da-DK', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+        return `<div class="ann-item"><div>${a.text}</div><div class="ann-time">${t}</div></div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  function renderAnnouncementsAdmin() {
+    const el = document.getElementById('announcementsLog');
+    if (!announcements.length) { el.innerHTML = '<div class="empty-state" style="padding:8px;">Ingen opslag endnu</div>'; return; }
+    el.innerHTML = '<div style="display:grid;gap:8px;">' + announcements.map(a => {
+      const t = new Date(a.createdAt).toLocaleString('da-DK', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      return `<div style="padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--gray);display:flex;justify-content:space-between;align-items:start;">
+        <div><div style="font-size:0.85rem;">${a.text}</div><div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">${t}</div></div>
+        <button onclick="deleteAnnouncement('${a._key}')" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:0.85rem;padding:4px;">🗑</button>
+      </div>`;
+    }).join('') + '</div>';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Exports
+  // ═══════════════════════════════════════════════════════════════════
+  window.exportCSV = () => {
+    if (!participants.length) return showToast('Ingen deltagere');
+    const rows = [['Navn','Alder','Email','Telefon','Niveau','Onsket makker'],...participants.map(p=>[p.navn,p.alder||'',p.email||'',p.telefon||'',p.niveau,p.makker||''])];
+    const csv = rows.map(r=>r.map(v=>'"'+v+'"').join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}));
+    a.download = 'padel_deltagere.csv'; a.click();
+  };
+
+  window.exportTeamsCSV = () => {
+    if (!currentTeams.length) return showToast('Ingen hold');
+    const rows = [['Hold','Deltagere'],...currentTeams.map((t,i)=>['Hold '+(i+1),t.map(p=>p.navn).join(', ')])];
+    const csv = rows.map(r=>r.map(v=>'"'+v+'"').join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}));
+    a.download = 'padel_hold.csv'; a.click();
+  };
+
+  window.exportScheduleCSV = () => {
+    if (!allMatches.length) return showToast('Ingen kampe');
+    const rounds = {};
+    allMatches.forEach(m => { if(!rounds[m.round]) rounds[m.round]=[]; rounds[m.round].push(m); });
+    const totalRounds = Object.keys(rounds).length;
+    const rows = [['Runde','Bane','Hold A','Hold B','Status','Score'],...allMatches.map(m=>[
+      getRoundName(m.round,totalRounds), getCourtName(m.court),
+      m.teamA!=null&&m.teamA>=0?'Hold '+(m.teamA+1):'-', m.teamB!=null&&m.teamB>=0?'Hold '+(m.teamB+1):'-',
+      m.status, m.status==='completed'?(m.scoreA+'-'+m.scoreB):'-'
+    ])];
+    const csv = rows.map(r=>r.map(v=>'"'+v+'"').join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}));
+    a.download = 'padel_kampplan.csv'; a.click();
+  };
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Tab switching
+  // ═══════════════════════════════════════════════════════════════════
   window.switchTab = (name, btn) => {
-    document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
-    document.getElementById('tab-'+name).classList.add('active');
+    const mainSection = document.querySelector('body > main');
+    mainSection.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+    mainSection.querySelectorAll('.tabs .tab').forEach(el=>el.classList.remove('active'));
+    const tabEl = mainSection.querySelector('#tab-'+name) || document.getElementById('tab-'+name);
+    if (tabEl) tabEl.classList.add('active');
     if (btn) btn.classList.add('active');
   };
 
-  window.exportCSV = () => {
-    if (!participants.length) return showToast('Ingen deltagere');
-    const rows=[['Navn','Alder','Niveau','Ønsket makker'],...participants.map(p=>[p.navn,p.alder,p.niveau,p.makker||''])];
-    const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}));
-    a.download='padel_tilmeldinger.csv'; a.click();
+  window.switchAdminTab = (name, btn) => {
+    const admin = document.getElementById('adminDashboard');
+    admin.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    admin.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    const tabEl = document.getElementById('admin-tab-' + name) || document.getElementById('tab-' + name);
+    if (tabEl) { tabEl.classList.add('active'); if (btn) btn.classList.add('active'); }
   };
 
+  // ═══════════════════════════════════════════════════════════════════
+  // Helpers
+  // ═══════════════════════════════════════════════════════════════════
   window.copyLink = () => navigator.clipboard.writeText(location.href).then(()=>showToast('🔗 Link kopieret!'));
 
   function showToast(msg) {
-    const t=document.getElementById('toast');
-    t.textContent=msg; t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'),2500);
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2500);
   }
+
+  // ESC to close modals
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+    }
+  });
+
+  // Close autocomplete on click outside
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.autocomplete-wrapper')) {
+      document.querySelectorAll('.autocomplete-list').forEach(l => l.classList.remove('show'));
+    }
+  });
+
 </script>
 </body>
 </html>
