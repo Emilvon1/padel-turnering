@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Paddeltennis Turnering 🎾</title>
+  <title>Paddeltennis Turnering</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     :root {
       --green: #2d7a3a;
@@ -95,12 +96,10 @@
     .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 50000; align-items: center; justify-content: center; }
     .modal.active { display: flex; }
     .modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
-    /* Announcement banner on public side */
     .announcement-banner { background: #fff3e0; border: 1.5px solid #ffb74d; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; }
     .announcement-banner .ann-item { padding: 8px 0; border-bottom: 1px solid #ffe0b2; font-size: 0.9rem; }
     .announcement-banner .ann-item:last-child { border-bottom: none; }
     .announcement-banner .ann-time { font-size: 0.72rem; color: var(--muted); }
-    /* Bracket styles */
     .bracket-container { overflow-x: auto; padding: 20px 0; }
     .bracket { display: flex; align-items: stretch; min-width: max-content; }
     .bracket-round { display: flex; flex-direction: column; min-width: 180px; position: relative; }
@@ -114,7 +113,6 @@
     .bracket-team-row.winner { background: var(--green-pale); font-weight: 700; }
     .bracket-team-row .score { font-weight: 700; min-width: 20px; text-align: right; }
     .bracket-bane { font-size: 0.65rem; color: var(--muted); text-align: center; padding: 2px; background: var(--gray); }
-    /* Bracket connector lines */
     .bracket-connector { display: flex; flex-direction: column; justify-content: space-around; width: 32px; flex-shrink: 0; }
     .bracket-connector-pair { display: flex; flex-direction: column; flex: 1; justify-content: center; position: relative; }
     .bracket-connector-pair::before { content: ''; position: absolute; right: 0; top: 25%; bottom: 25%; width: 1.5px; background: var(--border); }
@@ -123,51 +121,124 @@
     .bracket-connector-pair .conn-bot { flex: 1; position: relative; }
     .bracket-connector-pair .conn-top::after { content: ''; position: absolute; right: 0; top: 50%; width: 12px; height: 1.5px; background: var(--border); }
     .bracket-connector-pair .conn-bot::after { content: ''; position: absolute; right: 0; top: 50%; width: 12px; height: 1.5px; background: var(--border); }
-    /* Round header pills for admin matches */
     .round-header { background: var(--green); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; margin: 16px 0 10px; text-align: center; }
     .round-header:first-child { margin-top: 0; }
-    /* Filter buttons row */
     .filter-pills { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
     .filter-pill { padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 20px; background: white; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--muted); transition: all 0.15s; }
     .filter-pill.active { background: var(--green); color: white; border-color: var(--green); }
-    /* Inline edit row */
     .inline-edit input, .inline-edit select { padding: 4px 8px; font-size: 0.82rem; border: 1.5px solid var(--green-light); border-radius: 6px; }
-    /* Partner autocomplete */
     .autocomplete-wrapper { position: relative; }
     .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; max-height: 150px; overflow-y: auto; display: none; }
     .autocomplete-list.show { display: block; }
     .autocomplete-item { padding: 8px 12px; cursor: pointer; font-size: 0.85rem; }
     .autocomplete-item:hover { background: var(--green-pale); }
     .partner-warning { color: #e65100; font-size: 0.72rem; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-    /* Drag and drop for teams */
     .team-member-draggable { cursor: grab; padding: 6px 8px; border-radius: 6px; transition: background 0.1s, opacity 0.2s; }
     .team-member-draggable:hover { background: rgba(0,0,0,0.05); }
     .team-member-draggable.dragging { opacity: 0.4; }
     .team-card.drag-over { border-color: var(--green-light); background: var(--green-pale); }
-    /* Checkbox settings */
     .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
     .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--green); }
     .checkbox-row label { font-size: 0.9rem; text-transform: none; font-weight: 500; color: var(--text); cursor: pointer; }
-    /* Admin floating bar */
     .admin-float-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--green); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; font-size: 0.85rem; box-shadow: 0 -2px 12px rgba(0,0,0,0.2); }
     .admin-float-bar button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.82rem; }
     .admin-float-bar button:hover { background: rgba(255,255,255,0.3); }
-    /* Bane name tags */
     .bane-tag { display: inline-block; background: var(--green-pale); color: var(--green); font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; }
-    /* Winner celebration */
     .winner-banner { background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%); color: #333; padding: 20px; border-radius: 12px; text-align: center; margin: 16px 0; }
     .winner-banner h3 { font-size: 1.3rem; margin-bottom: 4px; }
     .winner-banner .trophy { font-size: 2rem; }
+    .court-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .court-card { border: 2px solid var(--border); border-radius: 10px; overflow: hidden; background: white; }
+    .court-card.active { border-color: #e65100; }
+    .court-card-header { padding: 10px 14px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.4px; color: white; background: var(--green); display: flex; justify-content: space-between; align-items: center; }
+    .court-card.active .court-card-header { background: #e65100; }
+    .court-card-body { padding: 14px; }
+    .court-card-team { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+    .court-card-team:first-child { border-bottom: 1px solid var(--border); }
+    .court-card-team .team-name { font-weight: 600; font-size: 0.88rem; }
+    .court-card-team .team-score { font-size: 1.3rem; font-weight: 800; color: var(--green); }
+    .court-card.active .court-card-team .team-score { color: #e65100; }
+    .court-card-idle { padding: 20px 14px; text-align: center; color: var(--muted); font-size: 0.85rem; }
+    .live-pulse { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ff4444; margin-right: 6px; animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* ═══ Referee / Scorekeeper styles ═══ */
+    .referee-screen { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #1a1a2e; z-index: 60000; overflow: auto; color: white; }
+    .referee-screen.active { display: block; }
+    .referee-header { background: #e65100; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+    .referee-header h2 { font-size: 1.2rem; font-weight: 800; }
+    .referee-header button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.85rem; }
+    .court-selector { max-width: 500px; margin: 40px auto; padding: 0 20px; }
+    .court-selector h3 { font-size: 1.3rem; text-align: center; margin-bottom: 24px; color: #ccc; }
+    .court-check { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: rgba(255,255,255,0.08); border-radius: 12px; margin-bottom: 10px; cursor: pointer; transition: background 0.15s; }
+    .court-check:hover { background: rgba(255,255,255,0.14); }
+    .court-check input[type="checkbox"] { width: 24px; height: 24px; accent-color: #e65100; flex-shrink: 0; }
+    .court-check label { font-size: 1.1rem; font-weight: 600; cursor: pointer; flex: 1; }
+    .court-check .court-status { font-size: 0.8rem; color: #aaa; }
+    .referee-start-btn { display: block; max-width: 500px; margin: 24px auto; padding: 18px; background: #e65100; color: white; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: 800; cursor: pointer; width: calc(100% - 40px); }
+    .referee-start-btn:disabled { background: #555; cursor: not-allowed; }
+
+    /* Scorekeeper match card */
+    .sk-match { background: #16213e; border-radius: 16px; margin: 16px; overflow: hidden; }
+    .sk-match.golden-point { border: 3px solid #ffd700; box-shadow: 0 0 20px rgba(255,215,0,0.25); }
+    .sk-match-header { padding: 12px 16px; background: rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #aaa; }
+    .sk-match-header .sk-bane { font-weight: 700; color: #e65100; }
+    .sk-golden-label { background: #ffd700; color: #333; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.75rem; animation: pulse 1s infinite; }
+    .sk-scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 16px; gap: 8px; }
+    .sk-team { text-align: center; }
+    .sk-team-name { font-size: 0.9rem; font-weight: 600; color: #ccc; margin-bottom: 8px; min-height: 2.4em; }
+    .sk-serve { font-size: 1.4rem; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; margin-bottom: 4px; }
+    .sk-serve.active { opacity: 1; }
+    .sk-games { font-size: 3.5rem; font-weight: 900; color: white; line-height: 1; }
+    .sk-points { font-size: 1.6rem; font-weight: 700; color: #e65100; margin-top: 4px; }
+    .sk-vs { font-size: 0.9rem; color: #555; font-weight: 700; }
+    .sk-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .sk-point-btn { padding: 32px 16px; border: none; font-size: 1.3rem; font-weight: 800; cursor: pointer; transition: background 0.1s, transform 0.05s; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .sk-point-btn:active { transform: scale(0.97); }
+    .sk-point-btn.team-a { background: #1565c0; color: white; border-radius: 0 0 0 16px; }
+    .sk-point-btn.team-a:active { background: #0d47a1; }
+    .sk-point-btn.team-b { background: #c62828; color: white; border-radius: 0 0 16px 0; }
+    .sk-point-btn.team-b:active { background: #b71c1c; }
+    .sk-undo-row { display: flex; justify-content: center; padding: 8px 16px; gap: 10px; }
+    .sk-undo-btn { background: rgba(255,255,255,0.08); color: #aaa; border: 1px solid rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
+    .sk-undo-btn:hover { background: rgba(255,255,255,0.15); }
+    .sk-finish-btn { background: #4caf50; color: white; border: none; padding: 8px 20px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+
+    /* Timer */
+    .sk-timer { text-align: center; padding: 10px 16px; }
+    .sk-timer-display { font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums; color: white; }
+    .sk-timer-display.time-up { color: #ff4444; animation: flash-red 0.6s infinite; }
+    @keyframes flash-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .sk-timer-controls { display: flex; gap: 8px; justify-content: center; margin-top: 6px; flex-wrap: wrap; }
+    .sk-timer-controls button { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
+    .sk-timer-controls input { width: 60px; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; text-align: center; font-size: 0.85rem; }
+
+    /* Public court padel score */
+    .court-padel-score { display: flex; justify-content: center; gap: 4px; align-items: baseline; }
+    .court-padel-games { font-size: 1.6rem; font-weight: 900; }
+    .court-padel-pts { font-size: 0.9rem; font-weight: 700; color: var(--muted); }
+    .court-serve { font-size: 0.9rem; opacity: 0.5; }
+    .court-serve.active { opacity: 1; }
+    .court-timer-public { font-size: 0.85rem; font-weight: 700; text-align: center; padding: 4px 0; color: var(--green); }
+    .court-timer-public.time-up { color: #e53935; animation: flash-red 0.6s infinite; }
+    .court-golden-badge { display: inline-block; background: #ffd700; color: #333; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; }
+
+    /* Header buttons row */
+    .header-btns { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; }
+    .header-btns button { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
   </style>
 </head>
 <body>
 
 <!-- Public page header -->
 <header id="publicHeader">
-  <h1>🎾 <span id="headerTitle">Paddeltennis Turnering</span></h1>
-  <p id="headerSubtitle">Lordag kl. 12:00</p>
+  <h1><span id="headerTitle">Paddeltennis Turnering</span></h1>
+  <p id="headerSubtitle">Lørdag kl. 12:00</p>
   <span class="badge">Tilmeld dig herunder</span>
-  <button id="adminBtn" style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:6px 12px;border-radius:6px;font-size:0.8rem;cursor:pointer;">🔒 Admin</button>
+  <div class="header-btns">
+    <button id="refereeBtn">🏁 Dommer</button>
+    <button id="adminBtn">🔒 Admin</button>
+  </div>
 </header>
 
 <!-- Public announcements -->
@@ -176,7 +247,7 @@
 <main>
   <!-- Signup form card -->
   <div class="card">
-    <h2>📋 Tilmelding</h2>
+    <h2>Tilmelding</h2>
     <div class="connection-bar">
       <span class="status-dot" id="statusDot"></span>
       <span id="statusText">Forbinder...</span>
@@ -211,10 +282,10 @@
         </div>
       </div>
       <div class="field full" style="margin-top:12px;">
-        <label>Onsket makker (valgfrit)</label>
-        <input type="text" id="makker" placeholder="Navn pa onsket makker" />
+        <label>Ønsket makker (valgfrit)</label>
+        <input type="text" id="makker" placeholder="Navn på ønsket makker" />
       </div>
-      <button type="submit" class="btn" id="submitBtn">✅ Tilmeld mig</button>
+      <button type="submit" class="btn" id="submitBtn">Tilmeld mig</button>
     </form>
   </div>
 
@@ -225,17 +296,18 @@
       <strong id="countDisplay">0 deltagere</strong>
     </div>
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('liste',this)">👥 Deltagere</button>
-      <button class="tab" onclick="switchTab('hold',this)">🏆 Hold</button>
-      <button class="tab" onclick="switchTab('kampe',this)">📅 Kampe</button>
-      <button class="tab" onclick="switchTab('rangliste-public',this)">📊 Rangliste</button>
+      <button class="tab active" onclick="switchTab('liste',this)">Deltagere</button>
+      <button class="tab" onclick="switchTab('hold',this)">Hold</button>
+      <button class="tab" onclick="switchTab('baner',this)">Baner</button>
+      <button class="tab" onclick="switchTab('kampe',this)">Kampe</button>
+      <button class="tab" onclick="switchTab('rangliste-public',this)">Rangliste</button>
     </div>
 
     <div id="tab-liste" class="tab-content active">
       <div id="participantList" class="participant-list">
-        <div class="empty-state">Ingen tilmeldte endnu 🎾</div>
+        <div class="empty-state">Ingen tilmeldte endnu</div>
       </div>
-      <button class="btn btn-secondary" onclick="exportCSV()" style="margin-top:12px;">📥 Download tilmeldingsliste</button>
+      <button class="btn btn-secondary" onclick="exportCSV()" style="margin-top:12px;">Download tilmeldingsliste</button>
       <div style="margin-top:16px;">
         <label style="font-size:0.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;">Del dette link med alle</label>
         <div class="link-row">
@@ -246,12 +318,17 @@
     </div>
 
     <div id="tab-hold" class="tab-content">
-      <div class="info-box">Hold dannes af admin. De vises her nar de er klar.</div>
+      <div class="info-box">Hold dannes af admin. De vises her når de er klar.</div>
       <div id="teamsList" style="margin-top:14px;"><div class="empty-state">Ingen hold endnu</div></div>
     </div>
 
+    <div id="tab-baner" class="tab-content">
+      <div class="info-box">Live baneoversigt - viser kampe der spilles lige nu.</div>
+      <div id="courtDashboard"></div>
+    </div>
+
     <div id="tab-kampe" class="tab-content">
-      <div class="info-box">Turneringstrae - vindere rykker videre til naeste runde.</div>
+      <div class="info-box">Turneringstræ - vindere rykker videre til næste runde.</div>
       <div id="matchesList" class="matches-list">
         <div class="empty-state">Hold genereres for at se kampplanen</div>
       </div>
@@ -259,7 +336,7 @@
     </div>
 
     <div id="tab-rangliste-public" class="tab-content">
-      <div class="info-box">Live rangliste - opdateres nar kampe afslutter.</div>
+      <div class="info-box">Live rangliste - opdateres når kampe afslutter.</div>
       <table class="admin-table" style="font-size:0.9rem;">
         <thead><tr>
           <th style="width:50px;">Plads</th><th>Hold</th><th style="width:70px;">Point</th>
@@ -275,11 +352,11 @@
 
 <div id="toast" class="toast"></div>
 
-<!-- Admin floating bar (shown when admin is on public page) -->
+<!-- Admin floating bar -->
 <div id="adminFloatBar" class="admin-float-bar" style="display:none;">
-  <span>⚙️ Admin aktiv</span>
+  <span>Admin aktiv</span>
   <div style="display:flex;gap:8px;">
-    <button onclick="showAdminDashboard()">Abne Admin Panel</button>
+    <button onclick="showAdminDashboard()">Åbn Admin Panel</button>
     <button onclick="logoutAdmin()">Log ud</button>
   </div>
 </div>
@@ -287,40 +364,70 @@
 <!-- Admin Login Screen -->
 <div id="adminLoginScreen" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--green-pale);z-index:10000;overflow:auto;">
   <div style="max-width:400px;margin:60px auto;background:white;border-radius:12px;padding:40px;box-shadow:0 10px 40px rgba(0,0,0,0.1);">
-    <h1 style="font-size:2rem;margin-bottom:10px;color:var(--green);">🔐 Admin</h1>
-    <p style="color:var(--muted);margin-bottom:30px;">Adgangskode pakraevet</p>
+    <h1 style="font-size:2rem;margin-bottom:10px;color:var(--green);">Admin</h1>
+    <p style="color:var(--muted);margin-bottom:30px;">Log ind med din admin-konto</p>
+    <input type="email" id="adminLoginEmail" placeholder="Email" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:1rem;" />
     <input type="password" id="adminLoginPassword" placeholder="Adgangskode" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:16px;font-size:1rem;" />
-    <button id="adminLoginBtn" style="width:100%;padding:13px;background:var(--green);color:white;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Login</button>
+    <button id="adminLoginBtn" style="width:100%;padding:13px;background:var(--green);color:white;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Log ind</button>
+    <button onclick="document.getElementById('adminLoginScreen').style.display='none'" style="width:100%;padding:13px;background:white;color:var(--green);border:2px solid var(--green);border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:10px;">Tilbage</button>
   </div>
+</div>
+
+<!-- Referee Login Screen -->
+<div id="refereeLoginScreen" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#1a1a2e;z-index:55000;overflow:auto;">
+  <div style="max-width:400px;margin:60px auto;background:#16213e;border-radius:12px;padding:40px;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+    <h1 style="font-size:2rem;margin-bottom:10px;color:#e65100;">🏁 Dommer-login</h1>
+    <p style="color:#aaa;margin-bottom:30px;">Log ind for at holde styr på scoren</p>
+    <input type="email" id="refLoginEmail" placeholder="Email" style="width:100%;padding:12px;border:1.5px solid #333;border-radius:8px;margin-bottom:12px;font-size:1rem;background:#0f3460;color:white;" />
+    <input type="password" id="refLoginPassword" placeholder="Adgangskode" style="width:100%;padding:12px;border:1.5px solid #333;border-radius:8px;margin-bottom:16px;font-size:1rem;background:#0f3460;color:white;" />
+    <button id="refLoginBtn" style="width:100%;padding:13px;background:#e65100;color:white;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Log ind som dommer</button>
+    <button onclick="document.getElementById('refereeLoginScreen').style.display='none'" style="width:100%;padding:13px;background:transparent;color:#e65100;border:2px solid #e65100;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:10px;">Tilbage</button>
+  </div>
+</div>
+
+<!-- Referee Dashboard (full screen overlay) -->
+<div id="refereeDashboard" class="referee-screen">
+  <div class="referee-header">
+    <h2>🏁 Dommer</h2>
+    <div style="display:flex;gap:8px;">
+      <button id="refBackBtn" onclick="backToCourtSelector()" style="display:none;">← Skift baner</button>
+      <button onclick="exitReferee()">Luk</button>
+    </div>
+  </div>
+  <div id="refCourtSelector" class="court-selector">
+    <h3>Vælg baner at dømme</h3>
+    <div id="refCourtChecks"></div>
+    <button class="referee-start-btn" id="refStartBtn" onclick="startRefereeing()" disabled>Start Scoretavle</button>
+  </div>
+  <div id="refScorekeeper" style="display:none;padding-bottom:80px;"></div>
 </div>
 
 <!-- Admin Dashboard (overlay) -->
 <div id="adminDashboard" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#f5f5f5;z-index:10000;overflow:auto;">
   <header style="background:var(--green);color:white;padding:20px;display:flex;justify-content:space-between;align-items:center;">
-    <h1 style="font-size:1.5rem;">⚙️ Admin Panel</h1>
+    <h1 style="font-size:1.5rem;">Admin Panel</h1>
     <div style="display:flex;gap:8px;">
-      <button onclick="showPublicPage()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">👁 Vis forside</button>
+      <button onclick="showPublicPage()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">Vis forside</button>
       <button onclick="logoutAdmin()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">Log ud</button>
     </div>
   </header>
   <main style="max-width:1000px;margin:0 auto;padding:24px 16px;">
     <div style="background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:24px;">
       <div class="tabs" style="margin:0;border-radius:0;flex-wrap:wrap;">
-        <button class="tab active" onclick="switchAdminTab('indstillinger',this)" style="border-radius:0;">⚙️ Indstillinger</button>
-        <button class="tab" onclick="switchAdminTab('deltagere',this)" style="border-radius:0;">👥 Deltagere</button>
-        <button class="tab" onclick="switchAdminTab('hold',this)" style="border-radius:0;">🏆 Hold</button>
-        <button class="tab" onclick="switchAdminTab('kampe',this)" style="border-radius:0;">📅 Kampe</button>
-        <button class="tab" onclick="switchAdminTab('rangliste',this)" style="border-radius:0;">📊 Rangliste</button>
-        <button class="tab" onclick="switchAdminTab('beskeder',this)" style="border-radius:0;">📢 Opslagstavle</button>
-        <button class="tab" onclick="switchAdminTab('eksport',this)" style="border-radius:0;">📥 Eksport</button>
+        <button class="tab active" onclick="switchAdminTab('indstillinger',this)" style="border-radius:0;">Indstillinger</button>
+        <button class="tab" onclick="switchAdminTab('deltagere',this)" style="border-radius:0;">Deltagere</button>
+        <button class="tab" onclick="switchAdminTab('hold',this)" style="border-radius:0;">Hold</button>
+        <button class="tab" onclick="switchAdminTab('kampe',this)" style="border-radius:0;">Kampe</button>
+        <button class="tab" onclick="switchAdminTab('rangliste',this)" style="border-radius:0;">Rangliste</button>
+        <button class="tab" onclick="switchAdminTab('beskeder',this)" style="border-radius:0;">Opslagstavle</button>
+        <button class="tab" onclick="switchAdminTab('eksport',this)" style="border-radius:0;">Eksport</button>
       </div>
 
-      <!-- Settings Tab -->
       <div id="tab-indstillinger" class="tab-content active" style="padding:24px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Turneringsindstillinger</h2>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
           <div class="field"><label>Turneringsnavn</label><input type="text" id="tournamentName" value="Paddeltennis Turnering" /></div>
-          <div class="field"><label>Dato & Tidspunkt</label><input type="text" id="tournamentDateTime" value="Lordag kl. 12:00" /></div>
+          <div class="field"><label>Dato & Tidspunkt</label><input type="text" id="tournamentDateTime" value="Lørdag kl. 12:00" /></div>
           <div class="field"><label>Placering</label><input type="text" id="tournamentLocation" placeholder="Fx. Lalandia" /></div>
           <div class="field"><label>Max. deltagere</label><input type="number" id="maxParticipants" placeholder="Fx. 32" /></div>
           <div class="field"><label>Antal baner</label><input type="number" id="courtCount" value="4" min="1" max="20" /></div>
@@ -330,69 +437,61 @@
               <option value="americano">Americano (Round-robin)</option>
             </select>
           </div>
+          <div class="field"><label>Standard kamptid (min)</label><input type="number" id="defaultMatchTime" value="20" min="1" max="120" /></div>
         </div>
-
-        <!-- Court names -->
         <div style="margin-top:24px;">
           <h3 style="color:var(--green);font-size:1rem;margin-bottom:12px;">Banenavne</h3>
           <div id="courtNamesContainer" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
         </div>
-
-        <!-- Field visibility -->
         <div style="margin-top:24px;">
           <h3 style="color:var(--green);font-size:1rem;margin-bottom:12px;">Tilmeldingsfelter</h3>
-          <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;">Vaelg hvilke felter der vises i tilmeldingsformularen</p>
+          <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;">Vælg hvilke felter der vises i tilmeldingsformularen</p>
           <div class="checkbox-row"><input type="checkbox" id="showEmail" checked /><label for="showEmail">Email</label></div>
           <div class="checkbox-row"><input type="checkbox" id="showTelefon" checked /><label for="showTelefon">Telefon</label></div>
         </div>
-
-        <button class="btn" onclick="saveTournamentSettings()" style="max-width:200px;margin-top:20px;">💾 Gem indstillinger</button>
+        <button class="btn" onclick="saveTournamentSettings()" style="max-width:200px;margin-top:20px;">Gem indstillinger</button>
       </div>
 
-      <!-- Participants Tab -->
       <div id="tab-deltagere" class="tab-content" style="padding:24px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Deltager Management</h2>
         <div style="margin-bottom:20px;display:flex;gap:10px;">
-          <button class="btn btn-secondary" onclick="openAddParticipantModal()" style="flex:1;">+ Tilf&oslash;j deltager</button>
-          <button class="btn btn-secondary" onclick="openBulkImportModal()" style="flex:1;">📤 Bulk import CSV</button>
+          <button class="btn btn-secondary" onclick="openAddParticipantModal()" style="flex:1;">+ Tilføj deltager</button>
+          <button class="btn btn-secondary" onclick="openBulkImportModal()" style="flex:1;">Masseimport CSV</button>
         </div>
         <table class="admin-table" id="participantTable">
-          <thead id="participantTableHead"><tr><th>Navn</th><th>Niveau</th><th>Onsket makker</th><th>Aktuelt</th></tr></thead>
+          <thead id="participantTableHead"><tr><th>Navn</th><th>Niveau</th><th>Ønsket makker</th><th>Aktuelt</th></tr></thead>
           <tbody id="participantTableBody"><tr><td colspan="4" style="text-align:center;color:var(--muted);">Ingen deltagere</td></tr></tbody>
         </table>
       </div>
 
-      <!-- Teams Tab -->
       <div id="admin-tab-hold" class="tab-content" style="padding:24px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Hold</h2>
-        <div class="info-box">Trak deltagere mellem hold for at tilpasse. Klik "Generer" for automatisk niveau-baseret matching.</div>
+        <div class="info-box">Træk deltagere mellem hold for at tilpasse.</div>
         <div style="display:flex;gap:10px;margin-bottom:12px;">
-          <button class="btn" onclick="generateTeamsBalanced()" style="flex:1;">🎲 Generer hold (Niveau-baseret)</button>
-          <button class="btn btn-secondary" onclick="clearTeams()" style="flex:1;">🔄 Nulstil</button>
+          <button class="btn" onclick="generateTeamsBalanced()" style="flex:1;">Generer hold (Niveau-baseret)</button>
+          <button class="btn btn-secondary" onclick="clearTeams()" style="flex:1;">Nulstil</button>
         </div>
         <div class="checkbox-row" style="margin-bottom:16px;">
           <input type="checkbox" id="teamsVisible" />
-          <label for="teamsVisible" style="font-weight:700;">Gor hold synlige for deltagere</label>
+          <label for="teamsVisible" style="font-weight:700;">Gør hold synlige for deltagere</label>
         </div>
         <div id="adminTeamsList" style="margin-top:10px;"></div>
       </div>
 
-      <!-- Matches Tab -->
       <div id="admin-tab-kampe" class="tab-content" style="padding:24px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Kampplan & Baner</h2>
         <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-          <button class="btn" onclick="generateBracket()" style="flex:1;min-width:150px;">🏆 Knockout</button>
-          <button class="btn" onclick="generateSeededQual()" style="flex:1;min-width:150px;background:#e65100;">🎯 Seeded Kvalifikation</button>
-          <button class="btn" onclick="generateRoundRobin()" style="flex:1;min-width:150px;background:#1565c0;">🔄 Alle mod alle</button>
+          <button class="btn" onclick="generateBracket()" style="flex:1;min-width:150px;">Knockout</button>
+          <button class="btn" onclick="generateSeededQual()" style="flex:1;min-width:150px;background:#e65100;">Seeded Kvalifikation</button>
+          <button class="btn" onclick="generateRoundRobin()" style="flex:1;min-width:150px;background:#1565c0;">Alle mod alle</button>
         </div>
         <div id="adminFilterPills" class="filter-pills"></div>
         <div id="adminMatchesList" style="margin-top:10px;"></div>
       </div>
 
-      <!-- Leaderboard Tab -->
       <div id="tab-rangliste" class="tab-content" style="padding:24px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Live Rangliste</h2>
-        <div class="info-box">Ranglisten opdateres automatisk nar kampresultater tilfojes.</div>
+        <div class="info-box">Ranglisten opdateres automatisk når kampresultater tilføjes.</div>
         <table class="admin-table" style="font-size:0.9rem;">
           <thead><tr>
             <th style="width:50px;">Plads</th><th>Hold</th><th style="width:70px;">Point</th>
@@ -404,28 +503,26 @@
         </table>
       </div>
 
-      <!-- Messages/Announcements Tab -->
       <div id="tab-beskeder" class="tab-content" style="padding:24px;">
-        <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">📢 Opslagstavle</h2>
-        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">Beskeder vises pa forsiden for alle deltagere i realtid.</p>
+        <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Opslagstavle</h2>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">Beskeder vises på forsiden for alle deltagere i realtid.</p>
         <div class="field">
           <label>Ny besked</label>
           <textarea id="messageText" placeholder="Skriv din besked..." style="min-height:80px;"></textarea>
         </div>
-        <button class="btn" onclick="postAnnouncement()" style="max-width:200px;margin-top:12px;">📢 Slå op</button>
+        <button class="btn" onclick="postAnnouncement()" style="max-width:200px;margin-top:12px;">Slå op</button>
         <div id="announcementsList" style="margin-top:20px;">
           <h3 style="color:var(--green);margin-bottom:10px;">Aktive opslag</h3>
           <div id="announcementsLog"></div>
         </div>
       </div>
 
-      <!-- Export Tab -->
       <div id="tab-eksport" class="tab-content" style="padding:24px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Eksport</h2>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <button class="btn" onclick="exportCSV()">📥 Deltagere (CSV)</button>
-          <button class="btn" onclick="exportTeamsCSV()">📥 Hold (CSV)</button>
-          <button class="btn" onclick="exportScheduleCSV()">📥 Kampplan (CSV)</button>
+          <button class="btn" onclick="exportCSV()">Deltagere (CSV)</button>
+          <button class="btn" onclick="exportTeamsCSV()">Hold (CSV)</button>
+          <button class="btn" onclick="exportScheduleCSV()">Kampplan (CSV)</button>
         </div>
       </div>
     </div>
@@ -440,7 +537,7 @@
       <div class="field"><label>Navn *</label><input type="text" id="modalNavn" required /></div>
       <div class="field"><label>Alder</label><input type="number" id="modalAlder" min="5" max="99" /></div>
       <div class="field"><label>Niveau *</label>
-        <select id="modalNiveau" required><option value="">Vaelg niveau</option><option value="Ny">Ny</option><option value="Begynder">Begynder</option><option value="Ovet">Ovet</option></select>
+        <select id="modalNiveau" required><option value="">Vælg niveau</option><option value="Ny">Ny</option><option value="Begynder">Begynder</option><option value="Øvet">Øvet</option></select>
       </div>
       <div style="display:flex;gap:10px;margin-top:20px;">
         <button type="submit" class="btn" style="flex:1;">Tilf&oslash;j</button>
@@ -453,11 +550,11 @@
 <!-- Bulk Import Modal -->
 <div id="bulkImportModal" class="modal">
   <div class="modal-content">
-    <h2 style="color:var(--green);margin-bottom:20px;">Bulk Import CSV</h2>
+    <h2 style="color:var(--green);margin-bottom:20px;">Masseimport CSV</h2>
     <p style="color:var(--muted);font-size:0.9rem;margin-bottom:15px;">Upload CSV-fil med kolonnerne: Navn, Email, Niveau</p>
     <input type="file" id="bulkImportFile" accept=".csv" />
     <div style="display:flex;gap:10px;margin-top:20px;">
-      <button onclick="handleBulkImport()" class="btn" style="flex:1;">Importer</button>
+      <button onclick="handleBulkImport()" class="btn" style="flex:1;">Importér</button>
       <button onclick="closeBulkImportModal()" class="btn btn-secondary" style="flex:1;">Annuller</button>
     </div>
   </div>
@@ -467,6 +564,8 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getDatabase, ref, push, remove, update, onValue, serverTimestamp, set, get }
     from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+    from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyAQdz4isoox_PN1I2JFwHYucT_V-ADeWf0",
@@ -478,23 +577,204 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
+  const auth = getAuth(app);
 
   // ═══════════════════════════════════════════════════════════════════
   // State
   // ═══════════════════════════════════════════════════════════════════
   const colors = ['#2d7a3a','#1565c0','#6a1b9a','#c62828','#e65100','#00695c','#4527a0','#ad1457','#37474f','#558b2f'];
   const levelScores = { 'Ny': 1, 'Begynder': 2, 'Ovet': 3, 'Øvet': 3 };
+  const PADEL_POINTS = [0, 15, 30, 40];
   let participants = [];
   let currentTeams = [];
-  let allMatches = []; // bracket matches
-  let qualRounds = 0; // 0 = knockout, >0 = antal kvalifikationsrunder (alle mod alle)
-  let matchResults = {};
+  let allMatches = [];
+  let matchById = new Map();
+  let qualRounds = 0;
   let tournament = {};
   let announcements = [];
   let teamsVisible = false;
   let editingRow = null;
   window.isAdmin = false;
-  const ADMIN_PASSWORD = 'admin';
+  let isReferee = false;
+  let refereeCourts = [];
+  let timerIntervals = {};
+  let buzzedMatches = new Set(); // prevent double-buzzer on multi-device
+  let confettiFired = false;
+  let _saveTimer = null;
+  let _localSaveSeq = 0;   // incremented each time we write to Firebase
+  let _lastSeenSeq  = 0;   // last seq we received from Firebase (stored alongside bracket data)
+
+  // XSS protection: escape HTML in user-supplied strings
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function rebuildMatchIndex() { matchById.clear(); allMatches.forEach(m => matchById.set(m.id, m)); }
+  function findMatch(id) { return matchById.get(id) || allMatches.find(m => m.id === id); }
+
+  function getTeamNames(idx) {
+    if (idx == null || idx < 0 || !currentTeams[idx]) return 'Hold ' + ((idx ?? 0) + 1);
+    return currentTeams[idx].map(p => esc(p.navn)).join(' & ');
+  }
+  function getTeamShort(idx) {
+    if (idx == null || idx < 0 || !currentTeams[idx]) return 'Afventer';
+    return currentTeams[idx].map(p => esc(p.navn).split(' ')[0]).join(' & ');
+  }
+
+  // Buzzer sound via Web Audio API
+  let audioCtx = null;
+  function playBuzzer() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'square'; osc.frequency.value = 800; gain.gain.value = 0.3;
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+      osc.stop(audioCtx.currentTime + 1.5);
+      setTimeout(() => {
+        const o2 = audioCtx.createOscillator();
+        const g2 = audioCtx.createGain();
+        o2.connect(g2); g2.connect(audioCtx.destination);
+        o2.type = 'square'; o2.frequency.value = 600; g2.gain.value = 0.3;
+        o2.start();
+        g2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+        o2.stop(audioCtx.currentTime + 1.5);
+      }, 300);
+    } catch(e) { console.warn('Lydfejl:', e); }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Padel Scoring Logic
+  // ═══════════════════════════════════════════════════════════════════
+  function defaultPadelScore() {
+    return { pointsA: 0, pointsB: 0, gamesA: 0, gamesB: 0, serving: 'A', history: [] };
+  }
+
+  function padelPointLabel(idx) {
+    return String(PADEL_POINTS[Math.min(idx, 3)] ?? 0);
+  }
+
+  // Returns the deuce/advantage state, or null if normal play
+  function getScoreState(ps) {
+    const a = ps.pointsA, b = ps.pointsB;
+    if (a >= 3 && b >= 3) {
+      if (a === b) return 'deuce';       // 40-40 or back to deuce
+      if (a > b) return 'advantageA';     // advantage team A
+      return 'advantageB';                // advantage team B
+    }
+    return null;
+  }
+
+  // "Fordel inde" = advantage for the serving team
+  // "Fordel ude"  = advantage for the receiving team
+  function getAdvantageLabel(ps) {
+    const state = getScoreState(ps);
+    if (state === 'advantageA') return ps.serving === 'A' ? 'Fordel inde' : 'Fordel ude';
+    if (state === 'advantageB') return ps.serving === 'B' ? 'Fordel inde' : 'Fordel ude';
+    if (state === 'deuce') return 'Deuce';
+    return null;
+  }
+
+  function snapshotScore(ps) {
+    return { pointsA: ps.pointsA, pointsB: ps.pointsB, gamesA: ps.gamesA, gamesB: ps.gamesB, serving: ps.serving };
+  }
+
+  function addPadelPoint(ps, team) {
+    // Push snapshot before mutation so undo can restore it
+    if (!ps.history) ps.history = [];
+    ps.history.push(snapshotScore(ps));
+    if (ps.history.length > 200) ps.history = ps.history.slice(-100);
+
+    const myPts = team === 'A' ? 'pointsA' : 'pointsB';
+    const oppPts = team === 'A' ? 'pointsB' : 'pointsA';
+    const myGames = team === 'A' ? 'gamesA' : 'gamesB';
+
+    // Both at deuce or beyond (both >= 3)
+    if (ps.pointsA >= 3 && ps.pointsB >= 3) {
+      if (ps[myPts] > ps[oppPts]) {
+        // I had advantage → win game
+        ps[myGames]++;
+        ps.pointsA = 0; ps.pointsB = 0;
+        ps.serving = ps.serving === 'A' ? 'B' : 'A';
+        return 'game';
+      } else if (ps[myPts] === ps[oppPts]) {
+        // Deuce → I get advantage
+        ps[myPts]++;
+        return 'advantage';
+      } else {
+        // Opponent had advantage → back to deuce
+        ps[oppPts]--;
+        return 'deuce';
+      }
+    }
+
+    // Normal: at 40 with opponent below 40 → win game
+    if (ps[myPts] >= 3) {
+      ps[myGames]++;
+      ps.pointsA = 0; ps.pointsB = 0;
+      ps.serving = ps.serving === 'A' ? 'B' : 'A';
+      return 'game';
+    }
+
+    // Normal point progression (0→15→30→40)
+    ps[myPts]++;
+    return 'point';
+  }
+
+  function undoPadelLast(ps) {
+    if (!ps.history || !ps.history.length) return false;
+    const prev = ps.history.pop();
+    ps.pointsA = prev.pointsA; ps.pointsB = prev.pointsB;
+    ps.gamesA = prev.gamesA; ps.gamesB = prev.gamesB;
+    ps.serving = prev.serving;
+    return true;
+  }
+
+  function formatPadelScore(ps) {
+    const state = getScoreState(ps);
+    const advLabel = getAdvantageLabel(ps);
+    // For display: at deuce show "40", at advantage show "AD" / "40"
+    let ptsA, ptsB;
+    if (state === 'deuce') {
+      ptsA = '40'; ptsB = '40';
+    } else if (state === 'advantageA') {
+      ptsA = 'AD'; ptsB = '40';
+    } else if (state === 'advantageB') {
+      ptsA = '40'; ptsB = 'AD';
+    } else {
+      ptsA = padelPointLabel(ps.pointsA);
+      ptsB = padelPointLabel(ps.pointsB);
+    }
+    return {
+      gamesA: ps.gamesA, gamesB: ps.gamesB,
+      ptsA, ptsB,
+      deuce: state === 'deuce',
+      advantage: state === 'advantageA' || state === 'advantageB',
+      advLabel,  // "Fordel inde", "Fordel ude", "Deuce", or null
+      serving: ps.serving,
+      canUndo: !!(ps.history && ps.history.length)
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Timer Logic
+  // ═══════════════════════════════════════════════════════════════════
+  function getTimerRemaining(timer) {
+    if (!timer || !timer.duration) return null;
+    if (!timer.running) return timer.remaining ?? timer.duration;
+    const elapsed = Math.floor((Date.now() - timer.startedAt) / 1000);
+    return Math.max(0, (timer.remaining ?? timer.duration) - elapsed);
+  }
+
+  function formatTimer(secs) {
+    if (secs == null) return '--:--';
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  }
 
   // ═══════════════════════════════════════════════════════════════════
   // Init
@@ -502,20 +782,18 @@
   async function initializeTournament() {
     try {
       const snap = await get(ref(db, 'tournaments/default'));
-      if (snap.exists()) {
-        tournament = snap.val();
-      } else {
-        tournament = { name: 'Paddeltennis Turnering', dateTime: 'Lordag kl. 12:00', location: '', maxParticipants: null, courtCount: 4, format: 'knockout', courtNames: {}, showEmail: false, showTelefon: false };
+      if (snap.exists()) { tournament = snap.val(); }
+      else {
+        tournament = { name: 'Paddeltennis Turnering', dateTime: 'Lørdag kl. 12:00', location: '', maxParticipants: null, courtCount: 4, format: 'knockout', courtNames: {}, showEmail: false, showTelefon: false, defaultMatchTime: 20 };
         await set(ref(db, 'tournaments/default'), tournament);
       }
       applyTournamentSettings();
-    } catch(err) { console.error('Tournament init error:', err); }
+    } catch(err) { console.error('Turneringsfejl:', err); }
   }
 
   function applyTournamentSettings() {
     document.getElementById('headerTitle').textContent = tournament.name || 'Paddeltennis Turnering';
     document.getElementById('headerSubtitle').textContent = tournament.dateTime || '';
-    // Form field visibility
     const emailField = document.getElementById('emailField');
     const telefonField = document.getElementById('telefonField');
     const optRow = document.getElementById('optionalFieldsRow');
@@ -525,7 +803,6 @@
     if (telefonField) telefonField.style.display = showT ? '' : 'none';
     if (!showE && !showT && optRow) optRow.style.display = 'none';
     else if (optRow) optRow.style.display = '';
-    // Admin form
     if (document.getElementById('tournamentName')) {
       document.getElementById('tournamentName').value = tournament.name || '';
       document.getElementById('tournamentDateTime').value = tournament.dateTime || '';
@@ -535,6 +812,7 @@
       document.getElementById('tournamentFormat').value = tournament.format || 'knockout';
       document.getElementById('showEmail').checked = tournament.showEmail !== false;
       document.getElementById('showTelefon').checked = tournament.showTelefon !== false;
+      document.getElementById('defaultMatchTime').value = tournament.defaultMatchTime || 20;
     }
     renderCourtNames();
   }
@@ -551,90 +829,332 @@
   }
 
   function getCourtName(num) {
-    const names = tournament.courtNames || {};
-    return names[num] || 'Bane ' + num;
+    return (tournament.courtNames || {})[num] || 'Bane ' + num;
   }
 
-  // Share URL
   document.getElementById('shareUrl').textContent = 'https://emilvon1.github.io/padel-turnering/';
-
   initializeTournament();
 
   // ═══════════════════════════════════════════════════════════════════
   // Status
   // ═══════════════════════════════════════════════════════════════════
   function setStatus(state, msg) {
-    const dot = document.getElementById('statusDot');
-    dot.className = 'status-dot' + (state==='connected'?' connected':state==='error'?' error':'');
+    document.getElementById('statusDot').className = 'status-dot' + (state==='connected'?' connected':state==='error'?' error':'');
     document.getElementById('statusText').textContent = msg;
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Admin Auth - persists until logout
+  // Admin Auth
   // ═══════════════════════════════════════════════════════════════════
   document.getElementById('adminBtn').addEventListener('click', () => {
-    if (window.isAdmin) {
-      showAdminDashboard();
-    } else {
-      document.getElementById('adminLoginScreen').style.display = 'block';
-      document.getElementById('adminLoginPassword').value = '';
-      document.getElementById('adminLoginPassword').focus();
-    }
+    if (window.isAdmin) showAdminDashboard();
+    else { document.getElementById('adminLoginScreen').style.display = 'block'; document.getElementById('adminLoginEmail').value = ''; document.getElementById('adminLoginPassword').value = ''; document.getElementById('adminLoginEmail').focus(); }
   });
-
   document.getElementById('adminLoginBtn').addEventListener('click', () => loginAdmin());
   document.getElementById('adminLoginPassword').addEventListener('keypress', e => { if (e.key === 'Enter') loginAdmin(); });
 
-  window.loginAdmin = function() {
+  window.loginAdmin = async function() {
+    const email = document.getElementById('adminLoginEmail').value.trim();
     const pwd = document.getElementById('adminLoginPassword').value;
-    if (pwd === ADMIN_PASSWORD) {
-      window.isAdmin = true;
-      localStorage.setItem('padel_admin', 'true');
-      document.getElementById('adminLoginScreen').style.display = 'none';
+    if (!email || !pwd) return showToast('Udfyld email og adgangskode');
+    const btn = document.getElementById('adminLoginBtn');
+    btn.disabled = true; btn.textContent = 'Logger ind...';
+    try {
+      await signInWithEmailAndPassword(auth, email, pwd);
+      if (email.toLowerCase().includes('dommer')) {
+        await signOut(auth);
+        showToast('Dommere har ikke adgang til admin');
+        return;
+      }
       showAdminDashboard();
-      showToast('✅ Admin login');
-    } else {
-      showToast('❌ Forkert adgangskode');
-      document.getElementById('adminLoginPassword').value = '';
-      document.getElementById('adminLoginPassword').focus();
     }
+    catch(err) { showToast(err.code === 'auth/invalid-credential' ? 'Forkert email eller adgangskode' : 'Fejl: ' + err.message); document.getElementById('adminLoginPassword').value = ''; }
+    btn.disabled = false; btn.textContent = 'Log ind';
   };
 
   window.showAdminDashboard = function() {
+    const u = auth.currentUser;
+    if (u && u.email && u.email.toLowerCase().includes('dommer')) return;
     document.getElementById('adminDashboard').style.display = 'block';
     document.getElementById('adminFloatBar').style.display = 'none';
-    document.getElementById('adminBtn').textContent = '⚙️ Admin';
-    updateParticipantTable();
-    renderAdminTeams();
-    renderAdminMatches();
-    updateLeaderboard();
-    renderAnnouncementsAdmin();
-    applyTournamentSettings();
+    updateParticipantTable(); renderAdminTeams(); renderAdminMatches(); updateLeaderboard(); renderAnnouncementsAdmin(); applyTournamentSettings();
   };
+  window.showPublicPage = function() { document.getElementById('adminDashboard').style.display = 'none'; document.getElementById('adminFloatBar').style.display = 'flex'; };
+  window.logoutAdmin = async function() { try { await signOut(auth); } catch(e) {} };
 
-  window.showPublicPage = function() {
-    document.getElementById('adminDashboard').style.display = 'none';
-    document.getElementById('adminFloatBar').style.display = 'flex';
-  };
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      if (user.email && user.email.toLowerCase().includes('dommer')) return; // referee — no admin access
+      window.isAdmin = true;
+      document.getElementById('adminLoginScreen').style.display = 'none';
+      document.getElementById('refereeLoginScreen').style.display = 'none';
+      document.getElementById('adminFloatBar').style.display = 'flex';
+      showToast('Logget ind (' + user.email + ')');
+    } else {
+      window.isAdmin = false; isReferee = false;
+      document.getElementById('adminDashboard').style.display = 'none';
+      document.getElementById('adminFloatBar').style.display = 'none';
+      document.getElementById('adminLoginScreen').style.display = 'none';
+      document.getElementById('refereeDashboard').classList.remove('active');
+      render();
+    }
+  });
 
-  window.logoutAdmin = function() {
-    window.isAdmin = false;
-    localStorage.removeItem('padel_admin');
-    document.getElementById('adminDashboard').style.display = 'none';
-    document.getElementById('adminFloatBar').style.display = 'none';
-    document.getElementById('adminLoginScreen').style.display = 'none';
-    document.getElementById('adminBtn').textContent = '🔒 Admin';
-    render();
-    showToast('Logget ud');
-  };
+  // ═══════════════════════════════════════════════════════════════════
+  // Referee Auth & UI
+  // ═══════════════════════════════════════════════════════════════════
+  document.getElementById('refereeBtn').addEventListener('click', () => {
+    if (isReferee) { document.getElementById('refereeDashboard').classList.add('active'); return; }
+    document.getElementById('refereeLoginScreen').style.display = 'block';
+    document.getElementById('refLoginPassword').value = '';
+    document.getElementById('refLoginPassword').focus();
+  });
+  document.getElementById('refLoginBtn').addEventListener('click', () => loginReferee());
+  document.getElementById('refLoginPassword').addEventListener('keypress', e => { if (e.key === 'Enter') loginReferee(); });
 
-  // Restore admin on load
-  if (localStorage.getItem('padel_admin') === 'true') {
-    window.isAdmin = true;
-    document.getElementById('adminBtn').textContent = '⚙️ Admin';
-    // Show floating bar on public page
-    setTimeout(() => { document.getElementById('adminFloatBar').style.display = 'flex'; }, 200);
+  async function loginReferee() {
+    const email = document.getElementById('refLoginEmail').value.trim();
+    const pwd = document.getElementById('refLoginPassword').value;
+    if (!email || !pwd) return showToast('Udfyld alle felter');
+    const btn = document.getElementById('refLoginBtn');
+    btn.disabled = true; btn.textContent = 'Logger ind...';
+    try {
+      await signInWithEmailAndPassword(auth, email, pwd);
+      isReferee = true;
+      document.getElementById('refereeLoginScreen').style.display = 'none';
+      showRefCourtSelector();
+      document.getElementById('refereeDashboard').classList.add('active');
+      showToast('Dommer logget ind');
+    } catch(err) { showToast('Fejl: ' + (err.code === 'auth/invalid-credential' ? 'Forkert adgangskode' : err.message)); }
+    btn.disabled = false; btn.textContent = 'Log ind som dommer';
   }
+
+  window.exitReferee = () => {
+    document.getElementById('refereeDashboard').classList.remove('active');
+    document.getElementById('refScorekeeper').style.display = 'none';
+    document.getElementById('refCourtSelector').style.display = 'block';
+    Object.values(timerIntervals).forEach(id => clearInterval(id));
+    timerIntervals = {};
+  };
+
+  function showRefCourtSelector() {
+    const container = document.getElementById('refCourtChecks');
+    const courtCount = tournament.courtCount || 4;
+    container.innerHTML = '';
+    for (let c = 1; c <= courtCount; c++) {
+      const live = allMatches.find(m => m.court === c && m.status === 'in-progress');
+      const next = allMatches.find(m => m.court === c && m.status === 'scheduled');
+      let statusHTML = '';
+      if (live) {
+        statusHTML = `<div style="font-size:0.78rem;margin-top:4px;">
+          <span style="color:#e65100;font-weight:700;">● I gang:</span> <span style="color:#ddd;">${getTeamNames(live.teamA)} vs ${getTeamNames(live.teamB)}</span>
+          ${next ? `<br><span style="color:#888;">Næste:</span> <span style="color:#bbb;">${getTeamNames(next.teamA)} vs ${getTeamNames(next.teamB)}</span>` : ''}
+        </div>`;
+      } else if (next) {
+        statusHTML = `<div style="font-size:0.78rem;margin-top:4px;">
+          <span style="color:#888;">Næste:</span> <span style="color:#bbb;">${getTeamNames(next.teamA)} vs ${getTeamNames(next.teamB)}</span>
+        </div>`;
+      }
+      container.innerHTML += `<div class="court-check" style="flex-direction:column;align-items:flex-start;" onclick="document.getElementById('refCourt${c}').click()">
+        <div style="display:flex;align-items:center;gap:14px;width:100%;">
+          <input type="checkbox" id="refCourt${c}" ${refereeCourts.includes(c)?'checked':''} onchange="toggleRefCourt(${c})" onclick="event.stopPropagation()" />
+          <label for="refCourt${c}" onclick="event.stopPropagation()" style="flex:1;">${getCourtName(c)}</label>
+          <span class="court-status">${live ? 'Kamp i gang' : next ? 'Venter' : 'Ledig'}</span>
+        </div>
+        ${statusHTML}
+      </div>`;
+    }
+    updateRefStartBtn();
+  }
+
+  window.toggleRefCourt = (c) => {
+    const cb = document.getElementById('refCourt' + c);
+    if (cb.checked) {
+      if (!refereeCourts.includes(c)) refereeCourts.push(c);
+    } else {
+      refereeCourts = refereeCourts.filter(x => x !== c);
+    }
+    updateRefStartBtn();
+  };
+
+  function updateRefStartBtn() {
+    const btn = document.getElementById('refStartBtn');
+    btn.disabled = refereeCourts.length === 0;
+    btn.textContent = refereeCourts.length === 0 ? 'Vælg mindst 1 bane' : `Start Scoretavle (${refereeCourts.length} bane${refereeCourts.length > 1 ? 'r' : ''})`;
+  }
+
+  window.startRefereeing = () => {
+    document.getElementById('refCourtSelector').style.display = 'none';
+    document.getElementById('refScorekeeper').style.display = 'block';
+    document.getElementById('refBackBtn').style.display = 'block';
+    renderRefScorekeeper();
+  };
+
+  function renderRefScorekeeper() {
+    const el = document.getElementById('refScorekeeper');
+
+    // For each selected court, find current match (in-progress first, else first scheduled)
+    // and the next scheduled match after it.
+    const courtBlocks = refereeCourts.map(court => {
+      const courtMatches = allMatches.filter(m => m.court === court && (m.status === 'in-progress' || m.status === 'scheduled'));
+      const current = courtMatches.find(m => m.status === 'in-progress') || courtMatches.find(m => m.status === 'scheduled');
+      const next = current ? courtMatches.filter(m => m.status === 'scheduled' && m.id !== current.id)[0] : null;
+      return { court, current, next };
+    }).filter(b => b.current);
+
+    if (!courtBlocks.length) {
+      el.innerHTML = '<div style="text-align:center;color:#aaa;padding:60px 20px;"><p style="font-size:1.2rem;margin-bottom:12px;">Ingen aktive kampe på dine baner</p><button class="sk-undo-btn" onclick="backToCourtSelector()" style="margin-top:20px;">Vælg baner</button></div>';
+      return;
+    }
+
+    const activeMatches = [];
+
+    el.innerHTML = courtBlocks.map(({ current: match, next }) => {
+      activeMatches.push(match);
+      const ps = match.padelScore || defaultPadelScore();
+      const sc = formatPadelScore(ps);
+      const teamANames = getTeamNames(match.teamA);
+      const teamBNames = getTeamNames(match.teamB);
+      const deuceClass = (sc.deuce || sc.advantage) ? 'golden-point' : '';
+      const timer = match.timer || {};
+      const remaining = getTimerRemaining(timer);
+      const timerUp = remaining !== null && remaining <= 0 && timer.running;
+
+      const nextHTML = next ? `<div style="padding:10px 16px;background:rgba(255,255,255,0.04);border-top:1px solid rgba(255,255,255,0.08);font-size:0.8rem;color:#888;text-align:center;">
+        Næste kamp #${next.id + 1}: <span style="color:#ccc;font-weight:600;">${getTeamNames(next.teamA)}</span> vs <span style="color:#ccc;font-weight:600;">${getTeamNames(next.teamB)}</span>
+      </div>` : '';
+
+      if (match.status === 'scheduled') {
+        return `<div class="sk-match">
+          <div class="sk-match-header"><span class="sk-bane">${getCourtName(match.court)}</span><span>Kamp #${match.id + 1} — Venter</span></div>
+          <div class="sk-scoreboard">
+            <div class="sk-team"><div class="sk-team-name">${teamANames}</div><div class="sk-games" style="color:#555;">0</div></div>
+            <div class="sk-vs">VS</div>
+            <div class="sk-team"><div class="sk-team-name">${teamBNames}</div><div class="sk-games" style="color:#555;">0</div></div>
+          </div>
+          <div style="padding:16px;text-align:center;"><button class="btn" style="max-width:200px;background:#e65100;" onclick="refStartMatch(${match.id})">Start kamp</button></div>
+          ${nextHTML}
+        </div>`;
+      }
+
+      let timerHTML = `<div class="sk-timer">
+        <div class="sk-timer-display ${timerUp ? 'time-up' : ''}" id="timer-${match.id}">${formatTimer(remaining)}</div>
+        <div class="sk-timer-controls">
+          <input type="number" id="timer-input-${match.id}" value="${Math.ceil((timer.duration || (tournament.defaultMatchTime || 20) * 60) / 60)}" min="1" max="120" placeholder="min" />
+          <button onclick="setTimer(${match.id})">Sæt</button>
+          ${timer.running ? `<button onclick="pauseTimer(${match.id})">Pause</button>` : `<button onclick="startTimer(${match.id})">Start</button>`}
+          <button onclick="resetTimer(${match.id})">Nulstil</button>
+        </div>
+      </div>`;
+
+      return `<div class="sk-match ${deuceClass}">
+        <div class="sk-match-header">
+          <span class="sk-bane">${getCourtName(match.court)}</span>
+          ${sc.advLabel ? `<span class="sk-golden-label">${sc.advLabel.toUpperCase()}</span>` : ''}
+          <span>Kamp #${match.id + 1}</span>
+        </div>
+        ${timerHTML}
+        <div class="sk-scoreboard">
+          <div class="sk-team">
+            <div class="sk-serve ${sc.serving === 'A' ? 'active' : ''}" onclick="toggleServe(${match.id})">🎾</div>
+            <div class="sk-team-name">${teamANames}</div>
+            <div class="sk-games">${sc.gamesA}</div>
+            <div class="sk-points">${sc.ptsA}</div>
+          </div>
+          <div class="sk-vs">-</div>
+          <div class="sk-team">
+            <div class="sk-serve ${sc.serving === 'B' ? 'active' : ''}" onclick="toggleServe(${match.id})">🎾</div>
+            <div class="sk-team-name">${teamBNames}</div>
+            <div class="sk-games">${sc.gamesB}</div>
+            <div class="sk-points">${sc.ptsB}</div>
+          </div>
+        </div>
+        <div class="sk-buttons">
+          <button class="sk-point-btn team-a" onclick="refAddPoint(${match.id},'A')">+ Point<br>${teamANames.split(' & ')[0]}</button>
+          <button class="sk-point-btn team-b" onclick="refAddPoint(${match.id},'B')">+ Point<br>${teamBNames.split(' & ')[0]}</button>
+        </div>
+        <div class="sk-undo-row">
+          <button class="sk-undo-btn" onclick="refUndo(${match.id})" ${sc.canUndo ? '' : 'disabled style="opacity:0.3;cursor:default;"'}>↩ Fortryd</button>
+          <button class="sk-finish-btn" onclick="refFinishMatch(${match.id})">Afslut kamp</button>
+        </div>
+        ${nextHTML}
+      </div>`;
+    }).join('');
+
+    // Start timer display intervals
+    activeMatches.forEach(m => {
+      if (m.timer && m.timer.running && !timerIntervals[m.id]) {
+        timerIntervals[m.id] = setInterval(() => {
+          const el = document.getElementById('timer-' + m.id);
+          if (!el) return;
+          const rem = getTimerRemaining(m.timer);
+          el.textContent = formatTimer(rem);
+          if (rem <= 0) { el.classList.add('time-up'); clearInterval(timerIntervals[m.id]); delete timerIntervals[m.id]; if (!buzzedMatches.has(m.id)) { buzzedMatches.add(m.id); playBuzzer(); } }
+          else el.classList.remove('time-up');
+        }, 1000);
+      }
+    });
+  }
+
+  window.backToCourtSelector = () => { document.getElementById('refScorekeeper').style.display = 'none'; document.getElementById('refCourtSelector').style.display = 'block'; document.getElementById('refBackBtn').style.display = 'none'; showRefCourtSelector(); };
+
+  window.refStartMatch = (matchId) => {
+    const m = findMatch(matchId);
+    if (!m) return;
+    m.status = 'in-progress';
+    if (!m.padelScore) m.padelScore = defaultPadelScore();
+    const dur = (tournament.defaultMatchTime || 20) * 60;
+    m.timer = { duration: dur, remaining: dur, running: false, startedAt: null };
+    saveBracketDataNow(); renderRefScorekeeper();
+  };
+
+  window.refAddPoint = (matchId, team) => {
+    const m = findMatch(matchId);
+    if (!m || m.status !== 'in-progress') return;
+    if (!m.padelScore) m.padelScore = defaultPadelScore();
+    addPadelPoint(m.padelScore, team);
+    saveBracketData(); renderRefScorekeeper();
+  };
+
+  window.refUndo = (matchId) => {
+    const m = findMatch(matchId);
+    if (!m || !m.padelScore) return;
+    if (!undoPadelLast(m.padelScore)) return showToast('Intet at fortryde');
+    saveBracketData(); renderRefScorekeeper();
+  };
+
+  // Shared completion logic used by both referee and admin
+  function completeMatchWithScore(m, scoreA, scoreB) {
+    m.status = 'completed'; m.scoreA = scoreA; m.scoreB = scoreB;
+    m.winner = scoreA > scoreB ? m.teamA : m.teamB;
+    if (m.timer) m.timer.running = false;
+    if (timerIntervals[m.id]) { clearInterval(timerIntervals[m.id]); delete timerIntervals[m.id]; }
+    advanceWinners();
+  }
+
+  window.refFinishMatch = (matchId) => {
+    const m = findMatch(matchId);
+    if (!m) return;
+    const ps = m.padelScore || defaultPadelScore();
+    if (ps.gamesA === 0 && ps.gamesB === 0) return showToast('Spil mindst 1 parti');
+    if (ps.gamesA === ps.gamesB) return showToast('Uafgjort - spil videre');
+    completeMatchWithScore(m, ps.gamesA, ps.gamesB);
+    saveBracketDataNow(); renderRefScorekeeper();
+    showToast('Kamp afsluttet! ' + ps.gamesA + '-' + ps.gamesB);
+  };
+
+  window.toggleServe = (matchId) => {
+    const m = findMatch(matchId);
+    if (!m || !m.padelScore) return;
+    m.padelScore.serving = m.padelScore.serving === 'A' ? 'B' : 'A';
+    saveBracketData(); renderRefScorekeeper();
+  };
+
+  // Timer controls
+  window.setTimer = (matchId) => { const m = findMatch(matchId); if (!m) return; const mins = parseInt(document.getElementById('timer-input-' + matchId).value) || 20; const dur = mins * 60; m.timer = { duration: dur, remaining: dur, running: false, startedAt: null }; saveBracketData(); renderRefScorekeeper(); };
+  window.startTimer = (matchId) => { const m = findMatch(matchId); if (!m || !m.timer) return; m.timer.startedAt = Date.now(); m.timer.running = true; saveBracketData(); renderRefScorekeeper(); };
+  window.pauseTimer = (matchId) => { const m = findMatch(matchId); if (!m || !m.timer) return; m.timer.remaining = getTimerRemaining(m.timer); m.timer.running = false; m.timer.startedAt = null; if (timerIntervals[matchId]) { clearInterval(timerIntervals[matchId]); delete timerIntervals[matchId]; } saveBracketData(); renderRefScorekeeper(); };
+  window.resetTimer = (matchId) => { const m = findMatch(matchId); if (!m || !m.timer) return; if (timerIntervals[matchId]) { clearInterval(timerIntervals[matchId]); delete timerIntervals[matchId]; } const dur = m.timer.duration || (tournament.defaultMatchTime || 20) * 60; m.timer = { duration: dur, remaining: dur, running: false, startedAt: null }; saveBracketData(); renderRefScorekeeper(); };
 
   // ═══════════════════════════════════════════════════════════════════
   // Firebase listeners
@@ -642,12 +1162,10 @@
   function normalizeMatches(matches) {
     if (!matches) return [];
     const arr = Array.isArray(matches) ? matches : Object.values(matches);
-    return arr.map(m => ({
-      id: m.id ?? 0, round: m.round ?? 1, position: m.position ?? 0,
-      teamA: m.teamA ?? null, teamB: m.teamB ?? null,
-      court: m.court ?? 1, status: m.status ?? 'waiting',
-      scoreA: m.scoreA ?? null, scoreB: m.scoreB ?? null, winner: m.winner ?? null, feedsInto: m.feedsInto ?? null,
-    }));
+    return arr.map(m => {
+      const ps = m.padelScore ? { ...m.padelScore, history: m.padelScore.history || [] } : null;
+      return { id: m.id ?? 0, round: m.round ?? 1, position: m.position ?? 0, teamA: m.teamA ?? null, teamB: m.teamB ?? null, court: m.court ?? 1, status: m.status ?? 'waiting', scoreA: m.scoreA ?? null, scoreB: m.scoreB ?? null, winner: m.winner ?? null, feedsInto: m.feedsInto ?? null, padelScore: ps, timer: m.timer ?? null };
+    });
   }
   function normalizeTeams(teams) {
     if (!teams) return [];
@@ -665,10 +1183,7 @@
     setStatus('connected', 'Forbundet - ' + participants.length + ' tilmeldt');
   }, err => setStatus('error','Fejl: ' + err.message));
 
-  onValue(ref(db,'tournaments/default'), snap => {
-    tournament = snap.val() || tournament;
-    applyTournamentSettings();
-  }, err => console.error('Tournament listener error:', err));
+  onValue(ref(db,'tournaments/default'), snap => { tournament = snap.val() || tournament; applyTournamentSettings(); }, err => console.error('Turneringsindstillinger-fejl:', err));
 
   onValue(ref(db,'announcements'), snap => {
     announcements = [];
@@ -676,41 +1191,69 @@
     announcements.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
     renderPublicAnnouncements();
     if (window.isAdmin) renderAnnouncementsAdmin();
-  }, err => console.error('Announcements error:', err));
+  }, err => console.error('Opslag-fejl:', err));
 
-  // Load saved bracket from Firebase
   onValue(ref(db,'bracketData'), snap => {
     if (snap.exists()) {
       const data = snap.val();
       if (data.teams) currentTeams = normalizeTeams(data.teams);
-      if (data.matches) allMatches = normalizeMatches(data.matches);
+      if (data.matches) { allMatches = normalizeMatches(data.matches); rebuildMatchIndex(); }
       if (data.teamsVisible !== undefined) teamsVisible = data.teamsVisible;
       if (data.qualRounds !== undefined) qualRounds = data.qualRounds;
       if (document.getElementById('teamsVisible')) document.getElementById('teamsVisible').checked = teamsVisible;
-      renderTeams();
-      renderMatches();
-      renderPublicBracket();
-      updatePublicLeaderboard();
-      if (window.isAdmin) {
-        renderAdminTeams();
-        renderAdminMatches();
-        updateLeaderboard();
+
+      // Skip expensive DOM rebuilds when receiving our own save echo — we
+      // already rendered locally. Other devices always re-render (their
+      // _localSaveSeq starts at 0 and will never match our incremented seq).
+      const ownEcho = data._seq != null && data._seq === _localSaveSeq;
+      if (!ownEcho) {
+        renderTeams(); renderMatches(); renderPublicBracket(); renderCourtDashboard(); updatePublicLeaderboard();
+        if (window.isAdmin) { renderAdminTeams(); renderAdminMatches(); updateLeaderboard(); }
+        if (isReferee && document.getElementById('refScorekeeper').style.display !== 'none') renderRefScorekeeper();
       }
+      checkForTournamentWinner();
     }
-  }, err => console.error('Bracket listener error:', err));
+  }, err => console.error('Bracket-fejl:', err));
 
   // ═══════════════════════════════════════════════════════════════════
   // Save bracket state
   // ═══════════════════════════════════════════════════════════════════
-  async function saveBracketData() {
-    try {
-      await set(ref(db, 'bracketData'), {
-        teams: currentTeams,
-        matches: allMatches,
-        teamsVisible: teamsVisible,
-        qualRounds: qualRounds
-      });
-    } catch(err) { console.error('Save bracket error:', err); }
+  function saveBracketData() {
+    rebuildMatchIndex();
+    // Debounce: batch rapid score taps into one Firebase write
+    if (_saveTimer) clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(_doSaveBracket, 300);
+  }
+  function saveBracketDataNow() { // immediate save for structural changes (generate bracket, etc.)
+    rebuildMatchIndex();
+    if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+    _doSaveBracket();
+  }
+  async function _doSaveBracket() {
+    _saveTimer = null;
+    _localSaveSeq++;
+    const seq = _localSaveSeq;
+    try { await set(ref(db, 'bracketData'), { teams: currentTeams, matches: allMatches, teamsVisible, qualRounds, _seq: seq }); }
+    catch(err) { console.error('Gemme-fejl:', err); }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Confetti
+  // ═══════════════════════════════════════════════════════════════════
+  function checkForTournamentWinner() {
+    if (!allMatches.length || confettiFired) return;
+    const maxR = Math.max(...allMatches.map(m => m.round));
+    const fin = allMatches.find(m => m.round === maxR);
+    if (fin && fin.status === 'completed' && fin.winner !== null) {
+      confettiFired = true;
+      if (typeof confetti === 'function') {
+        const end = Date.now() + 3000;
+        const iv = setInterval(() => {
+          if (Date.now() > end) { clearInterval(iv); return; }
+          confetti({ particleCount: 80, spread: 100, origin: { x: Math.random(), y: Math.random() * 0.6 }, colors: ['#ffd700','#ff6b00','#4caf50','#2196f3','#e91e63'] });
+        }, 250);
+      }
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -719,26 +1262,10 @@
   window.saveTournamentSettings = async () => {
     const courtCount = parseInt(document.getElementById('courtCount').value) || 4;
     const courtNames = {};
-    for (let i = 1; i <= courtCount; i++) {
-      const el = document.getElementById('courtName' + i);
-      courtNames[i] = el ? el.value.trim() || ('Bane ' + i) : 'Bane ' + i;
-    }
-    tournament = {
-      name: document.getElementById('tournamentName').value,
-      dateTime: document.getElementById('tournamentDateTime').value,
-      location: document.getElementById('tournamentLocation').value,
-      maxParticipants: parseInt(document.getElementById('maxParticipants').value) || null,
-      courtCount: courtCount,
-      format: document.getElementById('tournamentFormat').value,
-      courtNames: courtNames,
-      showEmail: document.getElementById('showEmail').checked,
-      showTelefon: document.getElementById('showTelefon').checked
-    };
-    try {
-      await set(ref(db, 'tournaments/default'), tournament);
-      applyTournamentSettings();
-      showToast('✅ Indstillinger gemt');
-    } catch(err) { showToast('❌ Fejl: ' + err.message); }
+    for (let i = 1; i <= courtCount; i++) { const el = document.getElementById('courtName' + i); courtNames[i] = el ? el.value.trim() || ('Bane ' + i) : 'Bane ' + i; }
+    tournament = { name: document.getElementById('tournamentName').value, dateTime: document.getElementById('tournamentDateTime').value, location: document.getElementById('tournamentLocation').value, maxParticipants: parseInt(document.getElementById('maxParticipants').value) || null, courtCount, format: document.getElementById('tournamentFormat').value, courtNames, showEmail: document.getElementById('showEmail').checked, showTelefon: document.getElementById('showTelefon').checked, defaultMatchTime: parseInt(document.getElementById('defaultMatchTime').value) || 20 };
+    try { await set(ref(db, 'tournaments/default'), tournament); applyTournamentSettings(); showToast('Indstillinger gemt'); }
+    catch(err) { showToast('Fejl: ' + err.message); }
   };
 
   // ═══════════════════════════════════════════════════════════════════
@@ -753,814 +1280,423 @@
     const niveau = document.querySelector('input[name="niveau"]:checked')?.value;
     const makker = document.getElementById('makker').value.trim();
     if (!navn || !alder || !niveau) return;
-    if (participants.find(p => p.navn.toLowerCase() === navn.toLowerCase())) return showToast('⚠️ ' + navn + ' er allerede tilmeldt');
+    if (participants.find(p => p.navn.toLowerCase() === navn.toLowerCase())) return showToast(navn + ' er allerede tilmeldt');
     const btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.textContent = 'Gemmer...';
-    try {
-      await push(ref(db,'deltagere'), { navn, alder, email, telefon, niveau, makker, _ts: serverTimestamp() });
-      e.target.reset();
-      showToast('🎾 ' + navn + ' er tilmeldt!');
-    } catch(err) { showToast('❌ ' + err.message); }
-    btn.disabled = false; btn.textContent = '✅ Tilmeld mig';
+    try { await push(ref(db,'deltagere'), { navn, alder, email, telefon, niveau, makker, _ts: serverTimestamp() }); e.target.reset(); showToast(navn + ' er tilmeldt!'); }
+    catch(err) { showToast(err.message); }
+    btn.disabled = false; btn.textContent = 'Tilmeld mig';
   });
 
-  window.removeParticipant = async key => {
-    if (!confirm('Fjern deltager?')) return;
-    await remove(ref(db,'deltagere/' + key));
-    showToast('Deltager fjernet');
-  };
+  window.removeParticipant = async key => { if (!confirm('Fjern deltager?')) return; await remove(ref(db,'deltagere/' + key)); showToast('Fjernet'); };
 
   // ═══════════════════════════════════════════════════════════════════
-  // Admin participant table with inline editing
+  // Admin participant table
   // ═══════════════════════════════════════════════════════════════════
   function updateParticipantTable() {
     const tbody = document.getElementById('participantTableBody');
     const thead = document.getElementById('participantTableHead');
-    const showE = tournament.showEmail === true;
-    const showT = tournament.showTelefon === true;
-    const colCount = 4 + (showE ? 1 : 0) + (showT ? 1 : 0);
-
-    thead.innerHTML = `<tr><th>Navn</th>${showE ? '<th>Email</th>' : ''}${showT ? '<th>Telefon</th>' : ''}<th>Niveau</th><th>Onsket makker</th><th>Aktuelt</th></tr>`;
-
-    if (!participants.length) {
-      tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align:center;color:var(--muted);">Ingen deltagere</td></tr>`;
-      return;
-    }
+    const showE = tournament.showEmail === true, showT = tournament.showTelefon === true;
+    thead.innerHTML = `<tr><th>Navn</th>${showE?'<th>Email</th>':''}${showT?'<th>Telefon</th>':''}<th>Niveau</th><th>Makker</th><th>Aktuelt</th></tr>`;
+    if (!participants.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);">Ingen deltagere</td></tr>'; return; }
     tbody.innerHTML = participants.map(p => {
       if (editingRow === p._key) {
-        const partnerMatch = p.makker && !participants.find(x => x.navn.toLowerCase() === (p.makker||'').toLowerCase() && x._key !== p._key);
         return `<tr class="inline-edit">
-          <td><input type="text" id="edit-navn-${p._key}" value="${p.navn}" style="width:100%;" /></td>
-          ${showE ? `<td><input type="email" id="edit-email-${p._key}" value="${p.email||''}" style="width:100%;" /></td>` : ''}
-          ${showT ? `<td><input type="tel" id="edit-telefon-${p._key}" value="${p.telefon||''}" style="width:100%;" /></td>` : ''}
-          <td><select id="edit-niveau-${p._key}">
-            <option value="Ny" ${p.niveau==='Ny'?'selected':''}>Ny</option>
-            <option value="Begynder" ${p.niveau==='Begynder'?'selected':''}>Begynder</option>
-            <option value="Ovet" ${p.niveau==='Ovet'||p.niveau==='Øvet'?'selected':''}>Ovet</option>
-          </select></td>
-          <td>
-            <div class="autocomplete-wrapper">
-              <input type="text" id="edit-makker-${p._key}" value="${p.makker||''}" placeholder="Onsket makker" style="width:100%;" oninput="showPartnerSuggestions('${p._key}',this.value)" />
-              <div id="suggestions-${p._key}" class="autocomplete-list"></div>
-            </div>
-          </td>
-          <td style="white-space:nowrap;">
-            <button class="btn btn-small" onclick="saveEdit('${p._key}')">Gem</button>
-            <button class="btn btn-small btn-secondary" onclick="cancelEdit()" style="margin-left:4px;">Annuller</button>
-          </td>
+          <td><input type="text" id="edit-navn-${p._key}" value="${esc(p.navn)}" style="width:100%;" /></td>
+          ${showE?`<td><input type="email" id="edit-email-${p._key}" value="${esc(p.email)}" style="width:100%;" /></td>`:''}
+          ${showT?`<td><input type="tel" id="edit-telefon-${p._key}" value="${esc(p.telefon)}" style="width:100%;" /></td>`:''}
+          <td><select id="edit-niveau-${p._key}"><option value="Ny" ${p.niveau==='Ny'?'selected':''}>Ny</option><option value="Begynder" ${p.niveau==='Begynder'?'selected':''}>Begynder</option><option value="Øvet" ${p.niveau==='Ovet'||p.niveau==='Øvet'?'selected':''}>Øvet</option></select></td>
+          <td><div class="autocomplete-wrapper"><input type="text" id="edit-makker-${p._key}" value="${esc(p.makker)}" style="width:100%;" oninput="showPartnerSuggestions('${p._key}',this.value)" /><div id="suggestions-${p._key}" class="autocomplete-list"></div></div></td>
+          <td style="white-space:nowrap;"><button class="btn btn-small" onclick="saveEdit('${p._key}')">Gem</button> <button class="btn btn-small btn-secondary" onclick="cancelEdit()">X</button></td>
         </tr>`;
       }
-      const partnerWarning = p.makker && !participants.find(x => x.navn.toLowerCase() === (p.makker||'').toLowerCase() && x._key !== p._key);
-      return `<tr>
-        <td><strong>${p.navn}</strong></td>
-        ${showE ? `<td>${p.email || '-'}</td>` : ''}
-        ${showT ? `<td>${p.telefon || '-'}</td>` : ''}
-        <td>${p.niveau}</td>
-        <td>${p.makker ? p.makker + (partnerWarning ? ' <span style="color:#e65100;" title="Matcher ingen deltager">⚠️</span>' : ' ✅') : '-'}</td>
-        <td style="white-space:nowrap;">
-          <button class="btn btn-small" onclick="startEdit('${p._key}')">Rediger</button>
-          <button class="btn btn-small" onclick="softDeleteParticipant('${p._key}')" style="background:#e53935;margin-left:4px;">Slet</button>
-        </td>
-      </tr>`;
+      const partnerOk = !p.makker || participants.some(x => x._key !== p._key && x.navn.toLowerCase() === p.makker.toLowerCase());
+      const makkerDisplay = p.makker ? `${esc(p.makker)} ${partnerOk ? '✅' : '<span title="Ingen deltager med dette navn" style="color:#e65100;">⚠️</span>'}` : '-';
+      return `<tr><td><strong>${esc(p.navn)}</strong></td>${showE?`<td>${esc(p.email)||'-'}</td>`:''}${showT?`<td>${esc(p.telefon)||'-'}</td>`:''}<td>${esc(p.niveau)}</td><td>${makkerDisplay}</td>
+        <td style="white-space:nowrap;"><button class="btn btn-small" onclick="startEdit('${p._key}')">Rediger</button> <button class="btn btn-small" onclick="softDeleteParticipant('${p._key}')" style="background:#e53935;">Slet</button></td></tr>`;
     }).join('');
   }
 
   window.startEdit = (key) => { editingRow = key; updateParticipantTable(); };
   window.cancelEdit = () => { editingRow = null; updateParticipantTable(); };
-
   window.saveEdit = async (key) => {
     const navn = document.getElementById('edit-navn-' + key)?.value?.trim();
-    const email = document.getElementById('edit-email-' + key)?.value?.trim();
-    const telefon = document.getElementById('edit-telefon-' + key)?.value?.trim();
-    const niveau = document.getElementById('edit-niveau-' + key)?.value;
-    const makker = document.getElementById('edit-makker-' + key)?.value?.trim();
-    if (!navn) return showToast('⚠️ Navn er pakraevet');
-    try {
-      await update(ref(db, 'deltagere/' + key), { navn, email, telefon, niveau, makker });
-      editingRow = null;
-      showToast('✅ Opdateret');
-    } catch(err) { showToast('❌ ' + err.message); }
+    if (!navn) return showToast('Navn er påkrævet');
+    const data = { navn, niveau: document.getElementById('edit-niveau-' + key)?.value, makker: document.getElementById('edit-makker-' + key)?.value?.trim() || '' };
+    const eEl = document.getElementById('edit-email-' + key); if (eEl) data.email = eEl.value.trim();
+    const tEl = document.getElementById('edit-telefon-' + key); if (tEl) data.telefon = tEl.value.trim();
+    try { await update(ref(db, 'deltagere/' + key), data); editingRow = null; showToast('Opdateret'); } catch(err) { showToast(err.message); }
   };
-
-  window.showPartnerSuggestions = (key, val) => {
-    const list = document.getElementById('suggestions-' + key);
-    if (!val || val.length < 1) { list.classList.remove('show'); return; }
-    const p = participants.find(x => x._key === key);
-    const matches = participants.filter(x => x._key !== key && x.navn.toLowerCase().includes(val.toLowerCase()));
-    if (!matches.length) { list.classList.remove('show'); return; }
-    list.innerHTML = matches.slice(0,5).map(m => `<div class="autocomplete-item" onclick="selectPartner('${key}','${m.navn}')">${m.navn} <span style="color:var(--muted);font-size:0.75rem;">(${m.niveau})</span></div>`).join('');
-    list.classList.add('show');
-  };
-
-  window.selectPartner = (key, name) => {
-    const input = document.getElementById('edit-makker-' + key);
-    if (input) input.value = name;
-    const list = document.getElementById('suggestions-' + key);
-    if (list) list.classList.remove('show');
-  };
-
-  window.softDeleteParticipant = (key) => {
-    const p = participants.find(x => x._key === key);
-    if (!p || !confirm('Slet ' + p.navn + '?')) return;
-    remove(ref(db, 'deltagere/' + key));
-    showToast(p.navn + ' slettet');
-  };
+  window.showPartnerSuggestions = (key, val) => { const list = document.getElementById('suggestions-' + key); if (!val) { list.classList.remove('show'); return; } const ms = participants.filter(x => x._key !== key && x.navn.toLowerCase().includes(val.toLowerCase())); if (!ms.length) { list.classList.remove('show'); return; } list.innerHTML = ms.slice(0,5).map(m => `<div class="autocomplete-item" onclick="selectPartner('${key}','${esc(m.navn).replace(/'/g,"&#39;")}')">${esc(m.navn)} (${esc(m.niveau)})</div>`).join(''); list.classList.add('show'); };
+  window.selectPartner = (key, name) => { const i = document.getElementById('edit-makker-' + key); if (i) i.value = name; const l = document.getElementById('suggestions-' + key); if (l) l.classList.remove('show'); };
+  window.softDeleteParticipant = (key) => { const p = participants.find(x => x._key === key); if (!p || !confirm('Slet ' + p.navn + '?')) return; remove(ref(db, 'deltagere/' + key)); showToast('Slettet'); };
 
   // Modals
-  window.openAddParticipantModal = () => { document.getElementById('addParticipantModal').classList.add('active'); };
-  window.closeAddParticipantModal = () => { document.getElementById('addParticipantModal').classList.remove('active'); };
-  window.openBulkImportModal = () => { document.getElementById('bulkImportModal').classList.add('active'); };
-  window.closeBulkImportModal = () => { document.getElementById('bulkImportModal').classList.remove('active'); };
+  window.openAddParticipantModal = () => document.getElementById('addParticipantModal').classList.add('active');
+  window.closeAddParticipantModal = () => document.getElementById('addParticipantModal').classList.remove('active');
+  window.openBulkImportModal = () => document.getElementById('bulkImportModal').classList.add('active');
+  window.closeBulkImportModal = () => document.getElementById('bulkImportModal').classList.remove('active');
 
   window.handleAddParticipant = async (e) => {
     e.preventDefault();
     const navn = document.getElementById('modalNavn').value.trim();
-    const alder = parseInt(document.getElementById('modalAlder').value) || 0;
     const niveau = document.getElementById('modalNiveau').value;
-    if (!navn || !niveau) return showToast('⚠️ Udfyld alle felter');
-    if (participants.find(p => p.navn.toLowerCase() === navn.toLowerCase())) return showToast('⚠️ Deltager findes allerede');
-    try {
-      await push(ref(db, 'deltagere'), { navn, alder, niveau, email: '', telefon: '', makker: '', _ts: serverTimestamp() });
-      showToast('✅ Deltager tilfojet');
-      document.querySelector('#addParticipantModal form').reset();
-      closeAddParticipantModal();
-    } catch(err) { showToast('❌ ' + err.message); }
+    if (!navn || !niveau) return showToast('Udfyld alle felter');
+    if (participants.find(p => p.navn.toLowerCase() === navn.toLowerCase())) return showToast('Deltager findes allerede');
+    try { await push(ref(db, 'deltagere'), { navn, alder: parseInt(document.getElementById('modalAlder').value)||0, niveau, email: '', telefon: '', makker: '', _ts: serverTimestamp() }); showToast('Tilføjet'); document.querySelector('#addParticipantModal form').reset(); closeAddParticipantModal(); } catch(err) { showToast(err.message); }
   };
 
   window.handleBulkImport = () => {
     const file = document.getElementById('bulkImportFile').files[0];
-    if (!file) return showToast('⚠️ Vaelg en CSV-fil');
+    if (!file) return showToast('Vælg en CSV-fil');
     Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (results) => {
-      let imported = 0;
-      for (const row of results.data) {
-        const navn = (row['Navn']||'').trim();
-        const niveau = (row['Niveau']||'Ny').trim();
-        if (!navn) continue;
-        if (participants.find(p => p.navn.toLowerCase() === navn.toLowerCase())) continue;
-        try { await push(ref(db, 'deltagere'), { navn, niveau, email: '', telefon: '', makker: '', _ts: serverTimestamp() }); imported++; } catch(err) {}
-      }
-      showToast('✅ ' + imported + ' deltagere importeret');
-      closeBulkImportModal();
+      let n = 0;
+      for (const row of results.data) { const navn = (row['Navn']||'').trim(); if (!navn || participants.find(p => p.navn.toLowerCase() === navn.toLowerCase())) continue; try { await push(ref(db, 'deltagere'), { navn, niveau: (row['Niveau']||'Ny').trim(), email: '', telefon: '', makker: '', _ts: serverTimestamp() }); n++; } catch(e) {} }
+      showToast(n + ' importeret'); closeBulkImportModal();
     }});
   };
 
   // ═══════════════════════════════════════════════════════════════════
-  // Teams - generation with drag & drop
+  // Teams
   // ═══════════════════════════════════════════════════════════════════
   function shuffle(a) { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
 
   window.generateTeamsBalanced = () => {
-    if (participants.length < 2) return showToast('⚠️ Mindst 2 deltagere');
+    if (participants.length < 2) return showToast('Mindst 2 deltagere');
     let assigned = new Set(), teams = [];
     const pool = [...participants];
-    // Partner wishes
-    pool.forEach(p => {
-      if (assigned.has(p.navn)) return;
-      const wish = p.makker ? pool.find(q => q.navn.toLowerCase().includes(p.makker.toLowerCase()) && !assigned.has(q.navn) && q.navn!==p.navn) : null;
-      if (wish) { teams.push([p,wish]); assigned.add(p.navn); assigned.add(wish.navn); }
-    });
-    // Level-based pairing
+    pool.forEach(p => { if (assigned.has(p.navn)) return; const wish = p.makker ? pool.find(q => q.navn.toLowerCase().trim() === p.makker.toLowerCase().trim() && !assigned.has(q.navn) && q._key !== p._key) : null; if (wish) { teams.push([p,wish]); assigned.add(p.navn); assigned.add(wish.navn); } });
     const unassigned = pool.filter(p => !assigned.has(p.navn));
-    const byLevel = {};
-    ['Ny','Begynder','Ovet','Øvet'].forEach(l => { byLevel[l] = shuffle(unassigned.filter(p => p.niveau === l)); });
-    // Merge Ovet and Øvet
-    byLevel['Ovet'] = [...(byLevel['Ovet']||[]), ...(byLevel['Øvet']||[])];
-    delete byLevel['Øvet'];
-    Object.values(byLevel).forEach(tier => {
-      for (let i=0;i<tier.length;i+=2) {
-        if (i+1<tier.length) { teams.push([tier[i],tier[i+1]]); assigned.add(tier[i].navn); assigned.add(tier[i+1].navn); }
-      }
-    });
-    // Odd person out
-    unassigned.forEach(p => {
-      if (!assigned.has(p.navn)) {
-        const incomplete = teams.find(t => t.length === 1);
-        if (incomplete) incomplete.push(p);
-        else teams.push([p]);
-        assigned.add(p.navn);
-      }
-    });
-    currentTeams = teams;
-    allMatches = [];
-    saveBracketData();
-    renderAdminTeams();
-    showToast('🎲 ' + teams.length + ' hold genereret!');
+    const byLevel = {}; ['Ny','Begynder','Ovet','Øvet'].forEach(l => { byLevel[l] = shuffle(unassigned.filter(p => p.niveau === l)); });
+    byLevel['Ovet'] = [...(byLevel['Ovet']||[]), ...(byLevel['Øvet']||[])]; delete byLevel['Øvet'];
+    Object.values(byLevel).forEach(tier => { for (let i=0;i<tier.length;i+=2) { if (i+1<tier.length) { teams.push([tier[i],tier[i+1]]); assigned.add(tier[i].navn); assigned.add(tier[i+1].navn); } } });
+    unassigned.forEach(p => { if (!assigned.has(p.navn)) { const inc = teams.find(t => t.length === 1); if (inc) inc.push(p); else teams.push([p]); assigned.add(p.navn); } });
+    currentTeams = teams; allMatches = []; saveBracketDataNow(); renderAdminTeams(); showToast(teams.length + ' hold genereret!');
   };
 
-  window.clearTeams = () => {
-    if (!confirm('Nulstil alle hold og kampe?')) return;
-    currentTeams = []; allMatches = []; matchResults = {}; qualRounds = 0;
-    saveBracketData();
-    renderAdminTeams(); renderAdminMatches(); updateLeaderboard();
-    showToast('🔄 Nulstillet');
-  };
+  window.clearTeams = () => { if (!confirm('Nulstil alt?')) return; currentTeams = []; allMatches = []; qualRounds = 0; confettiFired = false; saveBracketDataNow(); renderAdminTeams(); renderAdminMatches(); updateLeaderboard(); showToast('Nulstillet'); };
 
-  // Teams visibility toggle
-  document.getElementById('teamsVisible')?.addEventListener('change', (e) => {
-    teamsVisible = e.target.checked;
-    saveBracketData();
-    showToast(teamsVisible ? '👁 Hold er nu synlige' : '🔒 Hold er skjulte');
-  });
+  document.getElementById('teamsVisible')?.addEventListener('change', (e) => { teamsVisible = e.target.checked; saveBracketDataNow(); showToast(teamsVisible ? 'Hold synlige' : 'Hold skjulte'); });
 
-  // Drag & drop for teams
+  // Drag & drop
   let dragData = null;
-
-  window.dragStart = (teamIdx, playerKey, e) => {
-    dragData = { teamIdx, playerKey };
-    e.dataTransfer.effectAllowed = 'move';
-    e.target.classList.add('dragging');
-  };
-  window.dragEnd = (e) => { e.target.classList.remove('dragging'); };
+  window.dragStart = (ti, pk, e) => { dragData = { teamIdx: ti, playerKey: pk }; e.dataTransfer.effectAllowed = 'move'; e.target.classList.add('dragging'); };
+  window.dragEnd = (e) => e.target.classList.remove('dragging');
   window.dragOver = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
-  window.dragLeave = (e) => { e.currentTarget.classList.remove('drag-over'); };
-  window.dropOnTeam = (targetTeamIdx, e) => {
-    e.preventDefault();
-    e.currentTarget.classList.remove('drag-over');
-    if (!dragData || dragData.teamIdx === targetTeamIdx) return;
-    const player = currentTeams[dragData.teamIdx].find(p => p._key === dragData.playerKey);
-    if (!player) return;
-    currentTeams[dragData.teamIdx] = currentTeams[dragData.teamIdx].filter(p => p._key !== dragData.playerKey);
-    if (!currentTeams[dragData.teamIdx].length) currentTeams.splice(dragData.teamIdx, 1);
-    // Recalculate target after possible splice
-    const target = currentTeams[targetTeamIdx] || currentTeams[currentTeams.length - 1];
-    if (target) target.push(player);
-    dragData = null;
-    saveBracketData();
-    renderAdminTeams();
-  };
-
-  window.removeFromTeam = (teamIdx, playerKey) => {
-    currentTeams[teamIdx] = currentTeams[teamIdx].filter(p => p._key !== playerKey);
-    if (!currentTeams[teamIdx].length) currentTeams.splice(teamIdx, 1);
-    saveBracketData();
-    renderAdminTeams();
-  };
-
-  window.addToIncompleteTeam = (playerKey) => {
-    const p = participants.find(x => x._key === playerKey);
-    if (!p) return;
-    // Find first team with < 2 members
-    const incomplete = currentTeams.find(t => t.length < 2);
-    if (incomplete) { incomplete.push(p); }
-    else { currentTeams.push([p]); }
-    saveBracketData();
-    renderAdminTeams();
-    showToast(p.navn + ' tilfojet');
-  };
+  window.dragLeave = (e) => e.currentTarget.classList.remove('drag-over');
+  window.dropOnTeam = (ti, e) => { e.preventDefault(); e.currentTarget.classList.remove('drag-over'); if (!dragData || dragData.teamIdx === ti) return; const src = currentTeams[dragData.teamIdx]; const tgt = currentTeams[ti]; if (!src || !tgt) return; const pl = src.find(p => p._key === dragData.playerKey); if (!pl) return; currentTeams[dragData.teamIdx] = src.filter(p => p._key !== dragData.playerKey); tgt.push(pl); currentTeams = currentTeams.filter(t => t.length > 0); dragData = null; saveBracketDataNow(); renderAdminTeams(); };
+  window.removeFromTeam = (ti, pk) => { if (!currentTeams[ti]) return; currentTeams[ti] = currentTeams[ti].filter(p => p._key !== pk); currentTeams = currentTeams.filter(t => t.length > 0); saveBracketDataNow(); renderAdminTeams(); };
+  window.addToIncompleteTeam = (pk) => { const p = participants.find(x => x._key === pk); if (!p) return; const inc = currentTeams.find(t => t.length < 2); if (inc) inc.push(p); else currentTeams.push([p]); saveBracketDataNow(); renderAdminTeams(); };
 
   function renderAdminTeams() {
     const el = document.getElementById('adminTeamsList');
     if (!currentTeams.length) { el.innerHTML='<div class="empty-state">Ingen hold endnu</div>'; return; }
-    const assigned = new Set();
-    currentTeams.forEach(t => t.forEach(p => assigned.add(p._key)));
+    const assigned = new Set(); currentTeams.forEach(t => t.forEach(p => assigned.add(p._key)));
     const unassigned = participants.filter(p => !assigned.has(p._key));
-
-    el.innerHTML = '<div class="teams-grid">' + currentTeams.map((team,i)=>{
-      const levelAvg = team.length ? (team.reduce((sum,p) => sum + (levelScores[p.niveau]||1), 0) / team.length).toFixed(1) : 0;
+    el.innerHTML = '<div class="teams-grid">' + currentTeams.map((team,i) => {
+      const avg = team.length ? (team.reduce((s,p) => s + (levelScores[p.niveau]||1), 0) / team.length).toFixed(1) : 0;
       return `<div class="team-card" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOnTeam(${i},event)">
-        <div class="team-header" style="background:${colors[i%colors.length]};display:flex;justify-content:space-between;align-items:center;">
-          <span>Hold ${i+1}</span>
-          <span style="font-size:0.7rem;opacity:0.9;">Niveau avg: ${levelAvg}</span>
-        </div>
-        <div class="team-members">
-          ${team.map(p=>`<div class="team-member-draggable" draggable="true" ondragstart="dragStart(${i},'${p._key}',event)" ondragend="dragEnd(event)">
-            <span>👤</span><span><strong>${p.navn}</strong> - ${p.niveau}</span>
-            <button onclick="removeFromTeam(${i},'${p._key}')" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#e53935;font-size:0.8rem;">✕</button>
-          </div>`).join('')}
-          ${team.length===1?'<div style="font-size:0.75rem;color:#e53935;padding:4px;">⚠️ Mangler partner</div>':''}
-        </div>
+        <div class="team-header" style="background:${colors[i%colors.length]};display:flex;justify-content:space-between;"><span>Hold ${i+1}</span><span style="font-size:0.7rem;opacity:0.9;">Avg: ${avg}</span></div>
+        <div class="team-members">${team.map(p=>`<div class="team-member-draggable" draggable="true" ondragstart="dragStart(${i},'${p._key}',event)" ondragend="dragEnd(event)"><span>👤</span><strong>${esc(p.navn)}</strong> - ${esc(p.niveau)}<button onclick="removeFromTeam(${i},'${p._key}')" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#e53935;">✕</button></div>`).join('')}${team.length===1?'<div style="font-size:0.75rem;color:#e53935;padding:4px;">Mangler partner</div>':''}</div>
       </div>`;
     }).join('') + '</div>';
-
-    if (unassigned.length) {
-      el.innerHTML += `<div style="margin-top:16px;padding:14px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:8px;">
-        <div style="font-weight:700;color:#e65100;margin-bottom:8px;">⚠️ ${unassigned.length} uden hold:</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">${unassigned.map(p=>
-          `<div style="background:white;padding:6px 10px;border-radius:6px;border:1px solid #ffb74d;font-size:0.85rem;cursor:pointer;" onclick="addToIncompleteTeam('${p._key}')">${p.navn} <span style="color:#e65100;">+</span></div>`
-        ).join('')}</div>
-      </div>`;
-    }
+    if (unassigned.length) el.innerHTML += `<div style="margin-top:16px;padding:14px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:8px;"><div style="font-weight:700;color:#e65100;margin-bottom:8px;">${unassigned.length} uden hold:</div><div style="display:flex;gap:6px;flex-wrap:wrap;">${unassigned.map(p=>`<div style="background:white;padding:6px 10px;border-radius:6px;border:1px solid #ffb74d;font-size:0.85rem;cursor:pointer;" onclick="addToIncompleteTeam('${p._key}')">${esc(p.navn)} +</div>`).join('')}</div></div>`;
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // BRACKET / KNOCKOUT tournament — alle hold spiller i første runde
+  // Bracket generation
   // ═══════════════════════════════════════════════════════════════════
-  window.generateBracket = () => {
-    if (currentTeams.length < 2) return showToast('⚠️ Generer hold først');
-    qualRounds = 0;
-    const n = currentTeams.length;
-    const courtCount = tournament.courtCount || 4;
-    allMatches = [];
-    let matchId = 0;
+  function newMatch(id, round, pos, tA, tB, court) {
+    return { id, round, position: pos, teamA: tA, teamB: tB, court, status: tA != null && tB != null ? 'scheduled' : 'waiting', scoreA: null, scoreB: null, winner: null, feedsInto: null, padelScore: null, timer: null };
+  }
 
-    // Runde 1: Alle hold spiller (seed 0 vs n-1, 1 vs n-2, osv.)
-    const r1count = Math.floor(n / 2);
-    for (let i = 0; i < r1count; i++) {
-      allMatches.push({
-        id: matchId++, round: 1, position: i,
-        teamA: i, teamB: n - 1 - i,
-        court: (i % courtCount) + 1,
-        status: 'scheduled', scoreA: null, scoreB: null, winner: null,
-        feedsInto: null
-      });
-    }
-
-    // Byg efterfølgende runder
-    let prevMatches = allMatches.filter(m => m.round === 1);
-    let pendingCarry = (n % 2 === 1) ? { type: 'team', team: Math.floor(n / 2) } : null;
-    let round = 1;
-
+  // Shared: wire subsequent knockout rounds starting from `prev` + optional `carry`.
+  // Mutates allMatches in-place. Returns the final round number reached.
+  function wireSubsequentRounds(prev, carry, startRound, midRef, cc) {
+    let round = startRound;
+    let mid = midRef.v;
     while (true) {
-      const advCount = prevMatches.length + (pendingCarry ? 1 : 0);
-      if (advCount <= 1) break;
-
-      const nextMatchCount = Math.floor(advCount / 2);
-      const nextRound = round + 1;
-      const nextRoundMatches = [];
-
-      for (let i = 0; i < nextMatchCount; i++) {
-        const m = {
-          id: matchId++, round: nextRound, position: i,
-          teamA: null, teamB: null,
-          court: (i % courtCount) + 1,
-          status: 'waiting', scoreA: null, scoreB: null, winner: null,
-          feedsInto: null
-        };
-        nextRoundMatches.push(m);
-        allMatches.push(m);
-      }
-
-      // Saml kilder: [match0, match1, ..., carry]
-      const sources = [];
-      prevMatches.forEach(m => sources.push({ type: 'match', match: m }));
-      if (pendingCarry) sources.push(pendingCarry);
-
-      let newCarry = null;
-      for (let i = 0; i < sources.length; i++) {
-        const targetIdx = Math.floor(i / 2);
-        if (targetIdx >= nextRoundMatches.length) {
-          newCarry = sources[i]; // ulige — rykker videre
-          break;
-        }
-        const slot = i % 2 === 0 ? 'A' : 'B';
-        const src = sources[i];
-        if (src.type === 'match') {
-          src.match.feedsInto = { matchId: nextRoundMatches[targetIdx].id, slot };
-        } else {
-          if (slot === 'A') nextRoundMatches[targetIdx].teamA = src.team;
-          else nextRoundMatches[targetIdx].teamB = src.team;
-        }
-      }
-
-      // Tjek om nogen kampe allerede har begge hold
-      nextRoundMatches.forEach(m => {
-        if (m.teamA != null && m.teamB != null && m.status === 'waiting') m.status = 'scheduled';
-      });
-
-      pendingCarry = newCarry;
-      prevMatches = nextRoundMatches;
-      round++;
+      const adv = prev.length + (carry ? 1 : 0); if (adv <= 1) break;
+      const nxt = []; round++;
+      for (let i = 0; i < Math.floor(adv/2); i++) { const m = newMatch(mid++, round, i, null, null, (i%cc)+1); nxt.push(m); allMatches.push(m); }
+      const src = []; prev.forEach(m => src.push({ type:'match', match: m })); if (carry) src.push(carry);
+      let nc = null;
+      for (let i = 0; i < src.length; i++) { const ti = Math.floor(i/2); if (ti >= nxt.length) { nc = src[i]; break; } const slot = i%2===0?'A':'B'; const s = src[i]; if (s.type==='match') s.match.feedsInto = { matchId: nxt[ti].id, slot }; else { if (slot==='A') nxt[ti].teamA = s.team; else nxt[ti].teamB = s.team; } }
+      nxt.forEach(m => { if (m.teamA != null && m.teamB != null && m.status === 'waiting') m.status = 'scheduled'; });
+      carry = nc; prev = nxt;
     }
+    midRef.v = mid;
+    return round;
+  }
 
-    saveBracketData();
-    renderAdminMatches();
-    const realMatches = allMatches.filter(m => m.teamA !== -1 && m.teamB !== -1);
-    showToast('🏆 Turneringstræ genereret! ' + realMatches.length + ' kampe');
+  window.generateBracket = () => {
+    if (currentTeams.length < 2) return showToast('Generer hold først');
+    qualRounds = 0; confettiFired = false; const n = currentTeams.length; const cc = tournament.courtCount || 4;
+    allMatches = []; const midRef = { v: 0 };
+    for (let i = 0; i < Math.floor(n/2); i++) allMatches.push(newMatch(midRef.v++, 1, i, i, n-1-i, (i%cc)+1));
+    const r1 = allMatches.filter(m => m.round === 1);
+    const carry = (n%2===1) ? { type:'team', team: Math.floor(n/2) } : null;
+    wireSubsequentRounds(r1, carry, 1, midRef, cc);
+    activeRoundFilter = null; saveBracketDataNow(); renderAdminMatches(); showToast('Knockout-turnering genereret!');
   };
 
   function advanceWinners() {
-    allMatches.forEach(match => {
-      if (match.winner != null && match.feedsInto) {
-        const target = allMatches.find(m => m.id === match.feedsInto.matchId);
-        if (target) {
-          if (match.feedsInto.slot === 'A') target.teamA = match.winner;
-          else target.teamB = match.winner;
-          if (target.teamA != null && target.teamB != null && target.status === 'waiting') {
-            target.status = 'scheduled';
-          }
-        }
-      }
-    });
+    allMatches.forEach(m => { if (m.winner != null && m.feedsInto) { const t = findMatch(m.feedsInto.matchId); if (t) { if (m.feedsInto.slot === 'A') t.teamA = m.winner; else t.teamB = m.winner; if (t.teamA != null && t.teamB != null && t.status === 'waiting') t.status = 'scheduled'; } } });
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // ALLE MOD ALLE (round-robin) → Slutspil
-  // ═══════════════════════════════════════════════════════════════════
   window.generateSeededQual = () => {
-    if (currentTeams.length < 3) return showToast('⚠️ Mindst 3 hold');
-    const n = currentTeams.length;
-    const courtCount = tournament.courtCount || 4;
-    allMatches = [];
-    qualRounds = 1;
-    let matchId = 0;
-
-    const r1count = Math.floor(n / 2);
-    for (let i = 0; i < r1count; i++) {
-      allMatches.push({
-        id: matchId++, round: 1, position: i,
-        teamA: i, teamB: n - 1 - i,
-        court: (i % courtCount) + 1,
-        status: 'scheduled', scoreA: null, scoreB: null, winner: null,
-        feedsInto: null
-      });
-    }
-
-    saveBracketData();
-    renderAdminMatches();
-    const middleMsg = n % 2 === 1 ? ` Hold ${Math.floor(n/2)+1} venter på den svageste vinder.` : '';
-    showToast(`🎯 ${r1count} kvalifikationskampe!${middleMsg}`);
+    if (currentTeams.length < 3) return showToast('Mindst 3 hold');
+    const n = currentTeams.length; const cc = tournament.courtCount || 4;
+    allMatches = []; qualRounds = 1; confettiFired = false; let mid = 0;
+    for (let i = 0; i < Math.floor(n/2); i++) allMatches.push(newMatch(mid++, 1, i, i, n-1-i, (i%cc)+1));
+    activeRoundFilter = null; saveBracketDataNow(); renderAdminMatches(); showToast(Math.floor(n/2) + ' kvalifikationskampe!');
   };
 
   window.generateRoundRobin = () => {
-    if (currentTeams.length < 3) return showToast('⚠️ Mindst 3 hold for alle-mod-alle');
-    if (!confirm('Generer alle-mod-alle kvalifikation? Alle hold spiller mod hinanden.')) return;
-    const n = currentTeams.length;
-    const courtCount = tournament.courtCount || 4;
-    allMatches = [];
-    let matchId = 0;
-
-    const teams = Array.from({length: n}, (_, i) => i);
-    const hasOdd = n % 2 === 1;
-    if (hasOdd) teams.push(-1);
-    const total = teams.length;
-
-    for (let r = 0; r < total - 1; r++) {
-      let pos = 0;
-      for (let i = 0; i < total / 2; i++) {
-        const home = teams[i];
-        const away = teams[total - 1 - i];
-        if (home === -1 || away === -1) continue;
-        allMatches.push({
-          id: matchId++, round: r + 1, position: pos++,
-          teamA: home, teamB: away,
-          court: (pos % courtCount) + 1,
-          status: 'scheduled', scoreA: null, scoreB: null, winner: null,
-          feedsInto: null
-        });
-      }
-      const last = teams.pop();
-      teams.splice(1, 0, last);
-    }
-
-    qualRounds = total - 1;
-    saveBracketData();
-    renderAdminMatches();
-    showToast(`🔄 ${allMatches.length} kvalifikationskampe genereret!`);
+    if (currentTeams.length < 3) return showToast('Mindst 3 hold');
+    if (!confirm('Generer alle-mod-alle?')) return;
+    const n = currentTeams.length; const cc = tournament.courtCount || 4;
+    allMatches = []; let mid = 0; confettiFired = false;
+    const ts = Array.from({length: n}, (_, i) => i); if (n%2===1) ts.push(-1); const tot = ts.length;
+    for (let r = 0; r < tot-1; r++) { let pos = 0; for (let i = 0; i < tot/2; i++) { const h = ts[i], a = ts[tot-1-i]; if (h===-1||a===-1) continue; const court = (pos%cc)+1; allMatches.push(newMatch(mid++, r+1, pos, h, a, court)); pos++; } const last = ts.pop(); ts.splice(1,0,last); }
+    qualRounds = tot-1; activeRoundFilter = null; saveBracketDataNow(); renderAdminMatches(); showToast(allMatches.length + ' kampe!');
   };
 
   window.generatePlayoffs = () => {
-    const qualMatches = allMatches.filter(m => m.round <= qualRounds);
-    if (qualMatches.some(m => m.status !== 'completed')) {
-      return showToast('⚠️ Alle kvalifikationskampe skal være afsluttet først');
-    }
-
-    let advancingTeams;
-
+    const qm = allMatches.filter(m => m.round <= qualRounds);
+    if (qm.some(m => m.status !== 'completed')) return showToast('Afslut alle kvalifikationskampe først');
+    let adv;
     if (qualRounds === 1) {
-      // Seeded kvalifikation: vindere + midterhold (hvis ulige)
       const n = currentTeams.length;
-      const winners = qualMatches
-        .filter(m => m.winner != null)
-        .map(m => ({
-          idx: m.winner,
-          diff: m.winner === m.teamA ? (m.scoreA - m.scoreB) : (m.scoreB - m.scoreA)
-        }));
-      winners.sort((a, b) => b.diff - a.diff); // bedste scorer først
-      advancingTeams = winners.map(w => w.idx);
-      if (n % 2 === 1) advancingTeams.push(Math.floor(n / 2)); // midterhold sidst (lavest seed)
+      const winners = qm.filter(m => m.winner != null).map(m => ({ idx: m.winner, diff: m.winner === m.teamA ? (m.scoreA-m.scoreB) : (m.scoreB-m.scoreA) }));
+      winners.sort((a,b) => b.diff-a.diff); adv = winners.map(w => w.idx);
+      if (n%2===1) adv.push(Math.floor(n/2));
     } else {
-      // Alle mod alle: rangér alle hold
-      const stats = currentTeams.map((t, i) => ({ idx: i, points: 0, diff: 0, wins: 0 }));
-      qualMatches.forEach(m => {
-        if (m.teamA != null && m.teamB != null && stats[m.teamA] && stats[m.teamB]) {
-          const sa = m.scoreA || 0, sb = m.scoreB || 0;
-          stats[m.teamA].diff += sa - sb; stats[m.teamB].diff += sb - sa;
-          if (sa > sb) { stats[m.teamA].points += 3; stats[m.teamA].wins++; }
-          else if (sb > sa) { stats[m.teamB].points += 3; stats[m.teamB].wins++; }
-          else { stats[m.teamA].points += 1; stats[m.teamB].points += 1; }
-        }
-      });
-      const ranked = stats.sort((a, b) => b.points - a.points || b.diff - a.diff || b.wins - a.wins);
-      advancingTeams = ranked.slice(0, Math.min(4, currentTeams.length)).map(t => t.idx);
+      const stats = currentTeams.map((_,i) => ({ idx:i, pts:0, diff:0, wins:0 }));
+      qm.forEach(m => { if (m.teamA!=null && m.teamB!=null && stats[m.teamA] && stats[m.teamB]) { const sa=m.scoreA||0, sb=m.scoreB||0; stats[m.teamA].diff+=sa-sb; stats[m.teamB].diff+=sb-sa; if(sa>sb){stats[m.teamA].pts+=3;stats[m.teamA].wins++;}else if(sb>sa){stats[m.teamB].pts+=3;stats[m.teamB].wins++;}else{stats[m.teamA].pts++;stats[m.teamB].pts++;} } });
+      adv = stats.sort((a,b)=>b.pts-a.pts||b.diff-a.diff).slice(0,Math.min(4,currentTeams.length)).map(t=>t.idx);
     }
-
-    generateBracketForTeams(advancingTeams);
-    const names = advancingTeams.map((t, i) => `#${i+1} Hold ${t+1}`).join(', ');
-    showToast(`🏆 Slutspil: ${names}`);
+    generateBracketForTeams(adv); showToast('Slutspil genereret!');
   };
 
-  function generateBracketForTeams(teamIndices) {
-    const n = teamIndices.length;
-    if (n < 2) return;
-    const courtCount = tournament.courtCount || 4;
-    let matchId = allMatches.length;
+  function generateBracketForTeams(ti) {
+    const n = ti.length; if (n < 2) return;
+    const cc = tournament.courtCount || 4;
+    const midRef = { v: allMatches.length };
     let round = qualRounds + 1;
-
-    // Ulige: bedste hold (index 0) rykker videre, svagere spiller mod bunden
-    // Lige: standard seeding (0 vs n-1, 1 vs n-2)
-    const playoffR1 = [];
-    let pendingCarry = null;
-
-    if (n % 2 === 1) {
-      pendingCarry = { type: 'team', team: teamIndices[0] }; // bedste rykker videre
-      const rest = teamIndices.slice(1);
-      const rn = rest.length;
-      for (let i = 0; i < Math.floor(rn / 2); i++) {
-        const m = { id: matchId++, round, position: i, teamA: rest[i], teamB: rest[rn - 1 - i],
-          court: (i % courtCount) + 1, status: 'scheduled', scoreA: null, scoreB: null, winner: null, feedsInto: null };
-        playoffR1.push(m); allMatches.push(m);
-      }
+    const r1 = []; let carry = null;
+    if (n%2===1) {
+      carry = { type:'team', team: ti[0] };
+      const rest = ti.slice(1);
+      for (let i = 0; i < Math.floor(rest.length/2); i++) { const m = newMatch(midRef.v++, round, i, rest[i], rest[rest.length-1-i], (i%cc)+1); r1.push(m); allMatches.push(m); }
     } else {
-      for (let i = 0; i < n / 2; i++) {
-        const m = { id: matchId++, round, position: i, teamA: teamIndices[i], teamB: teamIndices[n - 1 - i],
-          court: (i % courtCount) + 1, status: 'scheduled', scoreA: null, scoreB: null, winner: null, feedsInto: null };
-        playoffR1.push(m); allMatches.push(m);
-      }
+      for (let i = 0; i < n/2; i++) { const m = newMatch(midRef.v++, round, i, ti[i], ti[n-1-i], (i%cc)+1); r1.push(m); allMatches.push(m); }
     }
-
-    // Byg efterfølgende runder
-    let prevMatches = playoffR1;
-    while (true) {
-      const advCount = prevMatches.length + (pendingCarry ? 1 : 0);
-      if (advCount <= 1) break;
-      round++;
-      const nextCount = Math.floor(advCount / 2);
-      const nextMatches = [];
-      for (let i = 0; i < nextCount; i++) {
-        const m = { id: matchId++, round, position: i, teamA: null, teamB: null,
-          court: (i % courtCount) + 1, status: 'waiting', scoreA: null, scoreB: null, winner: null, feedsInto: null };
-        nextMatches.push(m); allMatches.push(m);
-      }
-      const sources = [];
-      prevMatches.forEach(m => sources.push({ type: 'match', match: m }));
-      if (pendingCarry) sources.push(pendingCarry);
-      let newCarry = null;
-      for (let i = 0; i < sources.length; i++) {
-        const ti = Math.floor(i / 2);
-        if (ti >= nextMatches.length) { newCarry = sources[i]; break; }
-        const slot = i % 2 === 0 ? 'A' : 'B';
-        const src = sources[i];
-        if (src.type === 'match') src.match.feedsInto = { matchId: nextMatches[ti].id, slot };
-        else { if (slot === 'A') nextMatches[ti].teamA = src.team; else nextMatches[ti].teamB = src.team; }
-      }
-      nextMatches.forEach(m => { if (m.teamA != null && m.teamB != null && m.status === 'waiting') m.status = 'scheduled'; });
-      pendingCarry = newCarry;
-      prevMatches = nextMatches;
-    }
-
-    saveBracketData();
-    renderAdminMatches();
-    updateLeaderboard();
+    wireSubsequentRounds(r1, carry, round, midRef, cc);
+    saveBracketDataNow(); renderAdminMatches(); updateLeaderboard();
   }
 
-  function getRoundName(round, totalRounds) {
-    if (qualRounds > 0 && round <= qualRounds) {
-      return 'Kvalifikation — Runde ' + round;
-    }
-    const fromFinal = totalRounds - round;
-    if (fromFinal === 0) return 'Finale';
-    if (fromFinal === 1) return 'Semifinaler';
-    if (fromFinal === 2) return 'Kvartfinaler';
-    return 'Runde ' + round;
+  function getRoundName(r, tot) {
+    if (qualRounds > 0 && r <= qualRounds) return 'Kvalifikation R' + r;
+    const ff = tot - r; return ff===0?'Finale':ff===1?'Semifinaler':ff===2?'Kvartfinaler':'Runde '+r;
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Admin matches rendering with round headers
+  // Admin matches rendering
   // ═══════════════════════════════════════════════════════════════════
   let activeRoundFilter = null;
 
   function renderAdminMatches() {
     const el = document.getElementById('adminMatchesList');
     const pills = document.getElementById('adminFilterPills');
-    if (!allMatches.length) { el.innerHTML='<div class="empty-state">Generer turneringstrae forst</div>'; pills.innerHTML=''; return; }
-
-    const rounds = {};
-    allMatches.forEach(m => { if (!rounds[m.round]) rounds[m.round] = []; rounds[m.round].push(m); });
-    const roundNums = Object.keys(rounds).map(Number).sort((a,b) => a - b);
-    const totalRounds = roundNums.length;
-
-    // Filter pills
-    if (qualRounds > 0) {
-      const qualNums = roundNums.filter(r => r <= qualRounds);
-      const playoffNums = roundNums.filter(r => r > qualRounds);
-      pills.innerHTML = `<div class="filter-pill ${!activeRoundFilter?'active':''}" onclick="filterRound(null)">Alle</div>` +
-        `<div class="filter-pill ${activeRoundFilter==='qual'?'active':''}" onclick="filterRound('qual')">Kvalifikation</div>` +
-        playoffNums.map(r => `<div class="filter-pill ${activeRoundFilter===r?'active':''}" onclick="filterRound(${r})">${getRoundName(r,roundNums.length)}</div>`).join('');
-    } else {
-      pills.innerHTML = `<div class="filter-pill ${!activeRoundFilter?'active':''}" onclick="filterRound(null)">Alle</div>` +
-        roundNums.map(r => `<div class="filter-pill ${activeRoundFilter===r?'active':''}" onclick="filterRound(${r})">${getRoundName(r,roundNums.length)}</div>`).join('');
-    }
-
-    const filteredRounds = activeRoundFilter === 'qual'
-      ? roundNums.filter(r => r <= qualRounds)
-      : (activeRoundFilter ? [activeRoundFilter] : roundNums);
+    if (!allMatches.length) { el.innerHTML='<div class="empty-state">Generer turneringstræ først</div>'; pills.innerHTML=''; return; }
+    const rounds = {}; allMatches.forEach(m => { if (!rounds[m.round]) rounds[m.round] = []; rounds[m.round].push(m); });
+    const rn = Object.keys(rounds).map(Number).sort((a,b)=>a-b);
+    const tot = rn.length;
+    pills.innerHTML = `<div class="filter-pill ${!activeRoundFilter?'active':''}" onclick="filterRound(null)">Alle</div>` + rn.map(r => `<div class="filter-pill ${activeRoundFilter===r?'active':''}" onclick="filterRound(${r})">${getRoundName(r,tot)}</div>`).join('');
+    const fr = activeRoundFilter ? [activeRoundFilter] : rn;
     let html = '';
-
-    filteredRounds.forEach(r => {
-      const roundMatches = rounds[r] || [];
-      html += `<div class="round-header">${getRoundName(r, totalRounds)}</div>`;
-
-      // Group by court slots (how many can play at once)
-      const courtCount = tournament.courtCount || 4;
-      const slots = [];
-      for (let i = 0; i < roundMatches.length; i += courtCount) {
-        slots.push(roundMatches.slice(i, i + courtCount));
-      }
-
-      slots.forEach((slotMatches, slotIdx) => {
-        const realSlotMatches = slotMatches.filter(m => m.teamA !== -1 && m.teamB !== -1);
-        if (!realSlotMatches.length) return;
-        const isQualRound = qualRounds > 0 && r <= qualRounds;
-        if (isQualRound && slots.filter(s => s.some(m => m.teamA !== -1 && m.teamB !== -1)).length > 1) {
-          html += `<div style="font-size:0.78rem;font-weight:600;color:var(--muted);margin:8px 0 4px;padding-left:4px;">Pulje ${slotIdx+1}</div>`;
-        }
-        html += '<div style="display:grid;gap:8px;">';
-        slotMatches.forEach(match => {
-          if (match.teamA === -1 || match.teamB === -1) return;
-
-          const teamAName = match.teamA != null && match.teamA >= 0 && currentTeams[match.teamA]
-            ? currentTeams[match.teamA].map(p=>p.navn).join(' & ') : 'Afventer...';
-          const teamBName = match.teamB != null && match.teamB >= 0 && currentTeams[match.teamB]
-            ? currentTeams[match.teamB].map(p=>p.navn).join(' & ') : 'Afventer...';
-          const icon = match.status==='completed'?'✅':match.status==='in-progress'?'🔴':match.status==='waiting'?'⏳':'📋';
-
-          let actionHTML = '';
-          if (match.status === 'completed') {
-            actionHTML = `<strong style="font-size:1.1rem;">${match.scoreA||0} - ${match.scoreB||0}</strong>`;
-          } else if (match.status === 'in-progress') {
-            actionHTML = `<div style="display:flex;align-items:center;gap:6px;">
-              <button onclick="finishMatch(${match.id})" class="btn btn-small" style="background:#e53935;">Færdig</button>
-              <input type="number" min="0" max="99" value="${match.scoreA??0}" onchange="setMatchScore(${match.id},this.value,'A')" style="width:48px;padding:6px;border:1.5px solid var(--border);border-radius:6px;text-align:center;font-weight:700;" />
-              <span style="font-weight:700;">-</span>
-              <input type="number" min="0" max="99" value="${match.scoreB??0}" onchange="setMatchScore(${match.id},this.value,'B')" style="width:48px;padding:6px;border:1.5px solid var(--border);border-radius:6px;text-align:center;font-weight:700;" />
-            </div>`;
-          } else if (match.status === 'scheduled') {
-            actionHTML = `<button onclick="startMatch(${match.id})" class="btn btn-small">Start</button>`;
-          } else {
-            actionHTML = '<span style="color:var(--muted);font-size:0.8rem;">Afventer</span>';
-          }
-
-          const teamALabel = match.teamA != null && match.teamA >= 0 ? 'Hold '+(match.teamA+1) : 'Afventer';
-          const teamBLabel = match.teamB != null && match.teamB >= 0 ? 'Hold '+(match.teamB+1) : 'Afventer';
-
-          html += `<div style="padding:12px;border:1.5px solid ${match.status==='in-progress'?'#e65100':match.status==='completed'?'var(--green-light)':'var(--border)'};border-radius:8px;background:${match.status==='in-progress'?'#fff8f0':'var(--gray)'};display:flex;justify-content:space-between;align-items:center;gap:10px;">
-            <div style="display:flex;align-items:center;gap:8px;flex:1;">
-              <span style="font-size:1.1rem;">${icon}</span>
-              <div>
-                <div style="font-weight:700;font-size:0.85rem;"><span class="bane-tag">${getCourtName(match.court)}</span> ${teamALabel} vs ${teamBLabel}</div>
-                <div style="font-size:0.78rem;color:var(--muted);">${teamAName} mod ${teamBName}</div>
-              </div>
-            </div>
-            ${actionHTML}
-          </div>`;
-        });
-        html += '</div>';
+    fr.forEach(r => {
+      html += `<div class="round-header">${getRoundName(r, tot)}</div><div style="display:grid;gap:8px;">`;
+      (rounds[r]||[]).forEach(match => {
+        if (match.teamA === -1 || match.teamB === -1) return;
+        const tAn = getTeamNames(match.teamA);
+        const tBn = getTeamNames(match.teamB);
+        const ps = match.padelScore; const sc = ps ? formatPadelScore(ps) : null;
+        let act = '';
+        if (match.status === 'completed') {
+          const sd = sc ? `${sc.gamesA}-${sc.gamesB}` : `${match.scoreA||0}-${match.scoreB||0}`;
+          act = `<strong>${sd}</strong> <button onclick="editMatchScore(${match.id})" class="btn btn-small btn-secondary" style="font-size:0.72rem;padding:4px 8px;">Rediger</button>`;
+        } else if (match.status === 'in-progress') {
+          const g = sc ? `${sc.gamesA}-${sc.gamesB}` : '0-0'; const p2 = sc ? `${sc.ptsA}-${sc.ptsB}` : '0-0';
+          act = `<span style="font-weight:900;">${g}</span> <span style="color:var(--muted);font-size:0.8rem;">(${p2})</span> ${sc&&sc.advLabel?`<span class="court-golden-badge">${sc.advLabel}</span>`:''} <button onclick="adminFinishMatch(${match.id})" class="btn btn-small" style="background:#e53935;">Afslut</button>`;
+        } else if (match.status === 'scheduled') { act = `<button onclick="adminStartMatch(${match.id})" class="btn btn-small">Start</button>`; }
+        else act = '<span style="color:var(--muted);">Afventer</span>';
+        const icon = match.status==='completed'?'✅':match.status==='in-progress'?'🔴':match.status==='waiting'?'⏳':'📋';
+        html += `<div style="padding:12px;border:1.5px solid ${match.status==='in-progress'?'#e65100':match.status==='completed'?'var(--green-light)':'var(--border)'};border-radius:8px;background:${match.status==='in-progress'?'#fff8f0':'var(--gray)'};display:flex;justify-content:space-between;align-items:center;gap:10px;">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;">${icon} <div><div style="font-weight:700;font-size:0.85rem;"><span class="bane-tag">${getCourtName(match.court)}</span> Hold ${(match.teamA??-1)+1} vs Hold ${(match.teamB??-1)+1}</div><div style="font-size:0.78rem;color:var(--muted);">${tAn} mod ${tBn}</div></div></div>
+          <div style="display:flex;align-items:center;gap:8px;">${act}</div>
+        </div>`;
       });
+      html += '</div>';
     });
 
-    // Check for tournament winner
-    const finalMatch = allMatches.find(m => m.round === totalRounds);
-    if (finalMatch && finalMatch.status === 'completed' && finalMatch.winner !== null && currentTeams[finalMatch.winner]) {
-      const winnerNames = currentTeams[finalMatch.winner].map(p => p.navn).join(' & ');
-      html += `<div class="winner-banner"><div class="trophy">🏆</div><h3>VINDEREN</h3><p style="font-size:1.1rem;font-weight:700;">Hold ${finalMatch.winner+1}: ${winnerNames}</p></div>`;
+    // Winner & playoff generation
+    const maxR = Math.max(...allMatches.map(m=>m.round));
+    const fin = allMatches.find(m => m.round === maxR);
+    if (fin && fin.status === 'completed' && fin.winner !== null && currentTeams[fin.winner]) {
+      html += `<div class="winner-banner"><div class="trophy">🏆</div><h3>VINDEREN</h3><p style="font-size:1.1rem;font-weight:700;">Hold ${fin.winner+1}: ${getTeamNames(fin.winner)}</p></div>`;
     }
-
-    // "Generer slutspil" knap når alle kvalifikationskampe er færdige
     if (qualRounds > 0) {
-      const qualMatches = allMatches.filter(m => m.round <= qualRounds);
-      const playoffExists = allMatches.some(m => m.round > qualRounds);
-      const allQualDone = qualMatches.every(m => m.status === 'completed');
-      const remaining = qualMatches.filter(m => m.status !== 'completed').length;
-      if (allQualDone && !playoffExists) {
-        html += `<div style="margin-top:20px;text-align:center;padding:20px;background:var(--green-pale);border-radius:12px;border:2px solid var(--green-light);">
-          <p style="font-weight:700;color:var(--green);margin-bottom:12px;font-size:1rem;">✅ Alle kvalifikationskampe er færdige!</p>
-          <p style="color:var(--muted);font-size:0.85rem;margin-bottom:14px;">${qualRounds===1 ? 'Vindere rangeres efter score. Bedste vinder rykker videre, svageste møder midterholdet.' : 'Top 4 hold fra ranglisten går videre til slutspillet.'}</p>
-          <button class="btn" onclick="generatePlayoffs()" style="max-width:300px;margin:0 auto;">🏆 Generer slutspil fra rangliste</button>
-        </div>`;
-      } else if (!playoffExists && !allQualDone) {
-        html += `<div style="margin-top:16px;text-align:center;padding:12px;background:#fff3e0;border-radius:8px;font-size:0.85rem;color:#e65100;">
-          ⏳ ${remaining} kvalifikationskamp${remaining !== 1 ? 'e' : ''} mangler før slutspillet kan genereres
-        </div>`;
+      const qm = allMatches.filter(m => m.round <= qualRounds);
+      const pe = allMatches.some(m => m.round > qualRounds);
+      if (qm.every(m => m.status === 'completed') && !pe) {
+        html += `<div style="margin-top:20px;text-align:center;padding:20px;background:var(--green-pale);border-radius:12px;border:2px solid var(--green-light);"><p style="font-weight:700;color:var(--green);margin-bottom:12px;">Alle kvalifikationskampe færdige!</p><button class="btn" onclick="generatePlayoffs()" style="max-width:300px;margin:0 auto;">Generer slutspil</button></div>`;
+      } else if (!pe) {
+        const rem = qm.filter(m => m.status !== 'completed').length;
+        html += `<div style="margin-top:16px;text-align:center;padding:12px;background:#fff3e0;border-radius:8px;font-size:0.85rem;color:#e65100;">${rem} kampe mangler</div>`;
       }
     }
-
     el.innerHTML = html;
   }
 
   window.filterRound = (r) => { activeRoundFilter = r; renderAdminMatches(); };
 
-  window.startMatch = (matchId) => {
-    const m = allMatches.find(x => x.id === matchId);
-    if (m) { m.status = 'in-progress'; m.scoreA = m.scoreA || 0; m.scoreB = m.scoreB || 0; saveBracketData(); renderAdminMatches(); }
-  };
+  window.adminStartMatch = (matchId) => { const m = findMatch(matchId); if (!m) return; m.status = 'in-progress'; m.padelScore = m.padelScore || defaultPadelScore(); const dur = (tournament.defaultMatchTime||20)*60; m.timer = { duration: dur, remaining: dur, running: false, startedAt: null }; saveBracketDataNow(); renderAdminMatches(); };
 
-  window.setMatchScore = (matchId, score, team) => {
-    const m = allMatches.find(x => x.id === matchId);
-    if (m) { if (team === 'A') m.scoreA = parseInt(score)||0; else m.scoreB = parseInt(score)||0; saveBracketData(); }
-  };
-
-  window.finishMatch = (matchId) => {
-    const m = allMatches.find(x => x.id === matchId);
-    if (!m) return;
-    if (m.scoreA == null || m.scoreB == null) return showToast('⚠️ Indtast resultatet først');
-    if (m.scoreA === m.scoreB) return showToast('⚠️ Uafgjort ikke tilladt i knockout');
-    m.status = 'completed';
-    m.winner = m.scoreA > m.scoreB ? m.teamA : m.teamB;
-    advanceWinners();
-    updateLeaderboard();
-    saveBracketData();
-    renderAdminMatches();
-    showToast('✅ Resultat gemt — vinder rykker videre');
-  };
-
-  window.setMatchStatus = async (matchId, status) => {
-    const m = allMatches.find(x => x.id === matchId);
-    if (!m) return;
-    m.status = status;
-    if (status === 'completed' && m.scoreA != null && m.scoreB != null) {
-      m.winner = m.scoreA > m.scoreB ? m.teamA : m.teamB;
-      advanceWinners();
-      updateLeaderboard();
-      showToast('✅ Resultat gemt — vinder rykker videre');
+  window.adminFinishMatch = (matchId) => {
+    const m = findMatch(matchId); if (!m) return;
+    const ps = m.padelScore;
+    if (!ps || (ps.gamesA === 0 && ps.gamesB === 0)) {
+      const input = prompt('Indtast resultat (f.eks. 4-2):');
+      if (!input) return;
+      const parts = input.match(/^(\d+)\s*[-:]\s*(\d+)$/);
+      if (!parts) return showToast('Ugyldigt format — brug f.eks. 4-2');
+      const sA = parseInt(parts[1]), sB = parseInt(parts[2]);
+      if (sA === sB) return showToast('Uafgjort ikke tilladt');
+      completeMatchWithScore(m, sA, sB);
+    } else {
+      if (ps.gamesA === ps.gamesB) return showToast('Uafgjort - spil videre');
+      completeMatchWithScore(m, ps.gamesA, ps.gamesB);
     }
-    saveBracketData();
-    renderAdminMatches();
+    saveBracketDataNow(); renderAdminMatches(); updateLeaderboard();
+  };
+
+  window.startMatch = window.adminStartMatch;
+  window.finishMatch = window.adminFinishMatch;
+
+  // Recursively clear downstream bracket slots when re-editing a match
+  function cascadeClearDownstream(match) {
+    if (!match || !match.feedsInto) return;
+    const t = findMatch(match.feedsInto.matchId);
+    if (!t) return;
+    // Clear the slot this match fed into
+    if (match.feedsInto.slot === 'A') t.teamA = null; else t.teamB = null;
+    // If downstream was completed, fully reset it and cascade further
+    if (t.status === 'completed' || t.status === 'scheduled') {
+      t.status = 'waiting'; t.winner = null; t.scoreA = null; t.scoreB = null;
+      if (t.padelScore) { t.padelScore = null; }
+      cascadeClearDownstream(t);
+    } else if (t.status === 'in-progress') {
+      t.status = 'waiting'; t.winner = null;
+    }
+  }
+
+  window.editMatchScore = (matchId) => {
+    const m = findMatch(matchId); if (!m) return;
+    m.status = 'in-progress'; m.winner = null;
+    if (!m.padelScore) m.padelScore = defaultPadelScore();
+    cascadeClearDownstream(m);
+    saveBracketDataNow(); renderAdminMatches(); updateLeaderboard(); showToast('Redigér resultatet');
   };
 
   // ═══════════════════════════════════════════════════════════════════
-  // Public side rendering
+  // Public rendering
   // ═══════════════════════════════════════════════════════════════════
   function render() {
     const list = document.getElementById('participantList');
-    const count = document.getElementById('countDisplay');
-    count.textContent = participants.length + ' deltager' + (participants.length !== 1 ? 'e' : '');
-    if (!participants.length) { list.innerHTML = '<div class="empty-state">Ingen tilmeldte endnu 🎾</div>'; return; }
+    document.getElementById('countDisplay').textContent = participants.length + ' deltager' + (participants.length !== 1 ? 'e' : '');
+    if (!participants.length) { list.innerHTML = '<div class="empty-state">Ingen tilmeldte endnu</div>'; return; }
     list.innerHTML = participants.map((p,i) => {
       const init = p.navn.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-      const col = colors[i%colors.length];
       const tag = {Ny:'tag-ny',Begynder:'tag-begynder',Ovet:'tag-øvet','Øvet':'tag-øvet'}[p.niveau]||'tag-ny';
-      return `<div class="participant">
-        <div class="avatar" style="background:${col}">${init}</div>
-        <div class="participant-info">
-          <div class="participant-name">${p.navn}</div>
-          <div class="participant-meta">${p.alder ? p.alder + ' ar' : ''}${p.email ? ' - ' + p.email : ''}</div>
-        </div>
-        <span class="level-tag ${tag}">${p.niveau}</span>
-      </div>`;
+      return `<div class="participant"><div class="avatar" style="background:${colors[i%colors.length]}">${init}</div><div class="participant-info"><div class="participant-name">${esc(p.navn)}</div><div class="participant-meta">${p.alder?p.alder+' år':''}${p.email?' - '+esc(p.email):''}</div></div><span class="level-tag ${tag}">${esc(p.niveau)}</span></div>`;
     }).join('');
     updatePublicLeaderboard();
   }
+
+  function renderCourtDashboard() {
+    const el = document.getElementById('courtDashboard'); if (!el) return;
+    const cc = tournament.courtCount || 4;
+    if (!teamsVisible || !currentTeams.length) { el.innerHTML = '<div class="empty-state">Baneoversigt vises når turneringen starter</div>'; return; }
+    let html = '<div class="court-grid">';
+    for (let c = 1; c <= cc; c++) {
+      const match = allMatches.find(m => m.court === c && m.status === 'in-progress');
+      if (match && match.teamA != null && match.teamB != null) {
+        const ps = match.padelScore || defaultPadelScore(); const sc = formatPadelScore(ps);
+        const tA = getTeamNames(match.teamA);
+        const tB = getTeamNames(match.teamB);
+        const timer = match.timer; const rem = getTimerRemaining(timer); const up = rem !== null && rem <= 0 && timer && timer.running;
+        html += `<div class="court-card active"><div class="court-card-header"><span>${getCourtName(c)}</span><span><span class="live-pulse"></span>LIVE</span></div>
+          ${rem !== null ? `<div id="pub-timer-${match.id}" class="court-timer-public ${up?'time-up':''}">${formatTimer(rem)}</div>` : ''}
+          ${sc.advLabel ? `<div style="text-align:center;padding:4px 0;"><span class="court-golden-badge">${sc.advLabel}</span></div>` : ''}
+          <div class="court-card-body">
+            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='A'?'active':''}">🎾</span> ${tA}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesA}</span><span class="court-padel-pts">(${sc.ptsA})</span></div></div>
+            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='B'?'active':''}">🎾</span> ${tB}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesB}</span><span class="court-padel-pts">(${sc.ptsB})</span></div></div>
+          </div></div>`;
+      } else {
+        html += `<div class="court-card"><div class="court-card-header"><span>${getCourtName(c)}</span></div><div class="court-card-idle">Ingen kamp i gang</div></div>`;
+      }
+    }
+    html += '</div>';
+    if (!allMatches.some(m => m.status === 'in-progress')) html += '<div class="empty-state" style="margin-top:16px;">Ingen kampe i gang</div>';
+    el.innerHTML = html;
+  }
+
+  // Refresh only public timer text elements (avoid full DOM rebuild every second)
+  setInterval(() => {
+    allMatches.forEach(m => {
+      if (m.status !== 'in-progress' || !m.timer || !m.timer.running) return;
+      const el = document.getElementById('pub-timer-' + m.id);
+      if (!el) return;
+      const rem = getTimerRemaining(m.timer);
+      if (rem == null) return;
+      el.textContent = formatTimer(rem);
+      el.className = 'court-timer-public' + (rem <= 0 ? ' time-up' : '');
+    });
+  }, 1000);
 
   function renderTeams() {
     const el = document.getElementById('teamsList');
     if (!teamsVisible || !currentTeams.length) { el.innerHTML='<div class="empty-state">Hold er ikke offentliggjort endnu</div>'; return; }
     el.innerHTML = '<div class="teams-grid">' + currentTeams.map((team,i) =>
-      `<div class="team-card">
-        <div class="team-header" style="background:${colors[i%colors.length]}">Hold ${i+1}</div>
-        <div class="team-members">
-          ${team.map(p=>`<div class="team-member"><span>👤</span><span><strong>${p.navn}</strong> - ${p.alder?p.alder+' ar':''} - ${p.niveau}</span></div>`).join('')}
-          ${team.length===1?'<div style="font-size:0.78rem;color:#999;">⚠️ Mangler makker</div>':''}
-        </div>
-      </div>`
+      `<div class="team-card"><div class="team-header" style="background:${colors[i%colors.length]}">Hold ${i+1}</div><div class="team-members">${team.map(p=>`<div class="team-member"><span>👤</span><strong>${esc(p.navn)}</strong> - ${esc(p.niveau)}</div>`).join('')}</div></div>`
     ).join('') + '</div>';
   }
 
   function renderMatches() {
     const el = document.getElementById('matchesList');
-    if (!teamsVisible || !currentTeams.length || !allMatches.length) {
-      el.innerHTML='<div class="empty-state">Kampplanen vises nar hold er offentliggjort</div>'; return;
-    }
-    const rounds = {};
-    allMatches.forEach(m => { if (!rounds[m.round]) rounds[m.round] = []; rounds[m.round].push(m); });
-    const roundNums = Object.keys(rounds).map(Number).sort((a,b)=>a-b);
-    const totalRounds = roundNums.length;
-
+    if (!teamsVisible || !currentTeams.length || !allMatches.length) { el.innerHTML='<div class="empty-state">Kampplanen vises når hold er offentliggjort</div>'; return; }
+    const rounds = {}; allMatches.forEach(m => { if(!rounds[m.round]) rounds[m.round]=[]; rounds[m.round].push(m); });
+    const rn = Object.keys(rounds).map(Number).sort((a,b)=>a-b); const tot = rn.length;
     let html = '';
-    roundNums.forEach(r => {
-      html += `<div style="font-weight:700;color:var(--green);margin:12px 0 6px;font-size:0.9rem;">${getRoundName(r,totalRounds)}</div>`;
+    rn.forEach(r => {
+      html += `<div style="font-weight:700;color:var(--green);margin:12px 0 6px;">${getRoundName(r,tot)}</div>`;
       rounds[r].forEach(m => {
-        if (m.teamA === -1 || m.teamB === -1) return;
-        if (m.teamA == null && m.teamB == null) return;
-        const n1 = m.teamA != null && m.teamA >= 0 && currentTeams[m.teamA] ? currentTeams[m.teamA].map(p=>p.navn.split(' ')[0]).join(' & ') : 'Afventer';
-        const n2 = m.teamB != null && m.teamB >= 0 && currentTeams[m.teamB] ? currentTeams[m.teamB].map(p=>p.navn.split(' ')[0]).join(' & ') : 'Afventer';
-        const teamALabel = m.teamA != null && m.teamA >= 0 ? 'Hold '+(m.teamA+1) : 'Afventer';
-        const teamBLabel = m.teamB != null && m.teamB >= 0 ? 'Hold '+(m.teamB+1) : 'Afventer';
-        const score = m.status === 'completed' ? `${m.scoreA} - ${m.scoreB}` : (m.status === 'in-progress' ? '🔴 I gang' : 'VS');
-        const scoreColor = m.status === 'completed' ? '#4caf50' : (m.status === 'in-progress' ? '#e65100' : 'var(--muted)');
-        const bane = `<span class="bane-tag" style="margin-bottom:4px;">${getCourtName(m.court)}</span>`;
-        html += `<div class="match">
-          <div><div class="match-num">${bane} ${teamALabel}</div><div class="match-team">${n1}</div></div>
-          <div class="match-vs" style="font-weight:700;color:${scoreColor};">${score}</div>
-          <div><div class="match-num">${teamBLabel}</div><div class="match-team">${n2}</div></div>
-        </div>`;
+        if (m.teamA===-1||m.teamB===-1||(m.teamA==null&&m.teamB==null)) return;
+        const n1 = getTeamShort(m.teamA);
+        const n2 = getTeamShort(m.teamB);
+        const sc = m.padelScore ? formatPadelScore(m.padelScore) : null;
+        let score = 'VS', col = 'var(--muted)';
+        if (m.status === 'completed') { score = sc ? `${sc.gamesA}-${sc.gamesB}` : `${m.scoreA}-${m.scoreB}`; col = '#4caf50'; }
+        else if (m.status === 'in-progress') { score = sc ? `${sc.gamesA}(${sc.ptsA}) - ${sc.gamesB}(${sc.ptsB})` : 'I gang'; col = '#e65100'; }
+        html += `<div class="match"><div><div class="match-num"><span class="bane-tag">${getCourtName(m.court)}</span> Hold ${(m.teamA??-1)+1}</div><div class="match-team">${n1}</div></div><div class="match-vs" style="font-weight:700;color:${col};">${score}</div><div><div class="match-num">Hold ${(m.teamB??-1)+1}</div><div class="match-team">${n2}</div></div></div>`;
       });
     });
-
-    // Winner
-    const finalMatch = allMatches.find(m => m.round === totalRounds);
-    if (finalMatch && finalMatch.status === 'completed' && finalMatch.winner !== null && currentTeams[finalMatch.winner]) {
-      const wn = currentTeams[finalMatch.winner].map(p=>p.navn).join(' & ');
-      html += `<div class="winner-banner"><div class="trophy">🏆</div><h3>VINDEREN!</h3><p style="font-size:1.1rem;font-weight:700;">Hold ${finalMatch.winner+1}: ${wn}</p></div>`;
+    const maxR = Math.max(...allMatches.map(m=>m.round));
+    const fin = allMatches.find(m => m.round === maxR);
+    if (fin && fin.status === 'completed' && fin.winner !== null && currentTeams[fin.winner]) {
+      html += `<div class="winner-banner"><div class="trophy">🏆</div><h3>VINDEREN!</h3><p style="font-size:1.1rem;font-weight:700;">Hold ${fin.winner+1}: ${getTeamNames(fin.winner)}</p></div>`;
     }
     el.innerHTML = html;
   }
@@ -1568,229 +1704,96 @@
   function renderPublicBracket() {
     const el = document.getElementById('publicBracket');
     if (!teamsVisible || !allMatches.length) { el.innerHTML = ''; return; }
-
-    // Only show playoff rounds in bracket (skip qualification)
-    const playoffMatches = qualRounds > 0
-      ? allMatches.filter(m => m.round > qualRounds && m.teamA !== -1 && m.teamB !== -1)
-      : allMatches.filter(m => m.teamA !== -1 && m.teamB !== -1);
-    if (!playoffMatches.length) { el.innerHTML = ''; return; }
-
-    const rounds = {};
-    playoffMatches.forEach(m => { if (!rounds[m.round]) rounds[m.round] = []; rounds[m.round].push(m); });
-    const roundNums = Object.keys(rounds).map(Number).sort((a,b)=>a-b);
-    const totalRounds = qualRounds > 0
-      ? Math.max(...allMatches.map(m => m.round))
-      : roundNums.length;
-
-    function renderMatch(m) {
-      const cls = m.status === 'completed' ? 'completed' : (m.status === 'in-progress' ? 'active' : '');
-      const n1 = m.teamA != null && m.teamA >= 0 && currentTeams[m.teamA] ? currentTeams[m.teamA].map(p=>p.navn.split(' ')[0]).join(' & ') : 'Afventer';
-      const n2 = m.teamB != null && m.teamB >= 0 && currentTeams[m.teamB] ? currentTeams[m.teamB].map(p=>p.navn.split(' ')[0]).join(' & ') : 'Afventer';
-      const w1 = m.winner === m.teamA && m.status==='completed' ? 'winner' : '';
-      const w2 = m.winner === m.teamB && m.status==='completed' ? 'winner' : '';
-      return `<div class="bracket-match ${cls}">
-        <div class="bracket-bane">${getCourtName(m.court)}</div>
-        <div class="bracket-team-row ${w1}"><span>${n1}</span><span class="score">${m.status==='completed'?(m.scoreA||0):''}</span></div>
-        <div class="bracket-team-row ${w2}"><span>${n2}</span><span class="score">${m.status==='completed'?(m.scoreB||0):''}</span></div>
-      </div>`;
-    }
-
+    const pm = qualRounds > 0 ? allMatches.filter(m => m.round > qualRounds && m.teamA !== -1 && m.teamB !== -1) : allMatches.filter(m => m.teamA !== -1 && m.teamB !== -1);
+    if (!pm.length) { el.innerHTML = ''; return; }
+    const rounds = {}; pm.forEach(m => { if(!rounds[m.round]) rounds[m.round]=[]; rounds[m.round].push(m); });
+    const rn = Object.keys(rounds).map(Number).sort((a,b)=>a-b);
+    const tot = qualRounds > 0 ? Math.max(...allMatches.map(m=>m.round)) : rn.length;
     let html = '<div class="bracket-container"><div class="bracket">';
-    roundNums.forEach((r, ri) => {
-      html += `<div class="bracket-round"><div class="bracket-round-title">${getRoundName(r, totalRounds)}</div><div class="bracket-matches">`;
-      rounds[r].forEach(m => { html += renderMatch(m); });
+    rn.forEach((r, ri) => {
+      html += `<div class="bracket-round"><div class="bracket-round-title">${getRoundName(r,tot)}</div><div class="bracket-matches">`;
+      rounds[r].forEach(m => {
+        const cls = m.status==='completed'?'completed':m.status==='in-progress'?'active':'';
+        const n1 = getTeamShort(m.teamA);
+        const n2 = getTeamShort(m.teamB);
+        const w1 = m.winner===m.teamA&&m.status==='completed'?'winner':'';
+        const w2 = m.winner===m.teamB&&m.status==='completed'?'winner':'';
+        const sc = m.padelScore ? formatPadelScore(m.padelScore) : null;
+        const s1 = m.status==='completed'?(sc?sc.gamesA:(m.scoreA||0)):'';
+        const s2 = m.status==='completed'?(sc?sc.gamesB:(m.scoreB||0)):'';
+        html += `<div class="bracket-match ${cls}"><div class="bracket-bane">${getCourtName(m.court)}</div><div class="bracket-team-row ${w1}"><span>${n1}</span><span class="score">${s1}</span></div><div class="bracket-team-row ${w2}"><span>${n2}</span><span class="score">${s2}</span></div></div>`;
+      });
       html += '</div></div>';
-
-      // Add connector lines between this round and next
-      if (ri < roundNums.length - 1) {
-        const matchCount = rounds[r].length;
-        const pairs = Math.floor(matchCount / 2);
-        if (pairs > 0) {
-          html += '<div class="bracket-connector">';
-          for (let p = 0; p < pairs; p++) {
-            html += '<div class="bracket-connector-pair"><div class="conn-top"></div><div class="conn-bot"></div></div>';
-          }
-          if (matchCount % 2 === 1) {
-            html += '<div style="flex:1;display:flex;align-items:center;"><div style="width:100%;height:1.5px;background:var(--border);"></div></div>';
-          }
-          html += '</div>';
-        }
-      }
+      if (ri < rn.length - 1) { const mc = rounds[r].length; const pairs = Math.floor(mc/2); if (pairs>0){html+='<div class="bracket-connector">';for(let p=0;p<pairs;p++)html+='<div class="bracket-connector-pair"><div class="conn-top"></div><div class="conn-bot"></div></div>';if(mc%2===1)html+='<div style="flex:1;display:flex;align-items:center;"><div style="width:100%;height:1.5px;background:var(--border);"></div></div>';html+='</div>';}}
     });
     html += '</div></div>';
     el.innerHTML = html;
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Leaderboard (team-based)
+  // Leaderboard
   // ═══════════════════════════════════════════════════════════════════
-  function updateLeaderboard() {
-    const el = document.getElementById('leaderboardBody');
-    if (!currentTeams.length) { el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater</td></tr>'; return; }
-    const stats = currentTeams.map((t,i) => ({ idx:i, names:t.map(p=>p.navn).join(' & '), points:0, wins:0, losses:0, games:0 }));
-    allMatches.forEach(m => {
-      if (m.status==='completed' && m.teamA!=null && m.teamB!=null && m.scoreA!=null && m.scoreB!=null && stats[m.teamA] && stats[m.teamB]) {
-        stats[m.teamA].games++; stats[m.teamB].games++;
-        if (m.scoreA>m.scoreB) { stats[m.teamA].points+=3; stats[m.teamA].wins++; stats[m.teamB].losses++; }
-        else if (m.scoreB>m.scoreA) { stats[m.teamB].points+=3; stats[m.teamB].wins++; stats[m.teamA].losses++; }
-        else { stats[m.teamA].points++; stats[m.teamB].points++; }
-      }
-    });
-    const sorted = stats.slice().sort((a,b) => b.points-a.points || b.wins-a.wins);
-    if (!sorted.some(s=>s.games>0)) { el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater</td></tr>'; return; }
-    el.innerHTML = sorted.map((s,i) => {
-      const wr = s.games ? ((s.wins/s.games)*100).toFixed(1)+'%' : '-';
-      return `<tr ${s.games?'':'style="opacity:0.5;"'}><td><strong>${i+1}</strong></td><td><strong>Hold ${s.idx+1}</strong><br><span style="font-size:0.75rem;color:var(--muted);">${s.names}</span></td><td style="text-align:center;"><strong>${s.points}</strong></td><td style="text-align:center;">${s.wins}</td><td style="text-align:center;">${s.losses}</td><td style="text-align:center;">${wr}</td></tr>`;
-    }).join('');
+  function calcStats() {
+    const stats = currentTeams.map((t,i) => ({ idx:i, names:t.map(p=>esc(p.navn)).join(' & '), points:0, wins:0, losses:0, games:0 }));
+    allMatches.forEach(m => { if (m.status==='completed'&&m.teamA!=null&&m.teamB!=null&&m.scoreA!=null&&m.scoreB!=null&&stats[m.teamA]&&stats[m.teamB]) { stats[m.teamA].games++; stats[m.teamB].games++; if(m.scoreA>m.scoreB){stats[m.teamA].points+=3;stats[m.teamA].wins++;stats[m.teamB].losses++;}else if(m.scoreB>m.scoreA){stats[m.teamB].points+=3;stats[m.teamB].wins++;stats[m.teamA].losses++;}else{stats[m.teamA].points++;stats[m.teamB].points++;}} });
+    return stats.sort((a,b) => b.points-a.points || b.wins-a.wins);
   }
 
-  function updatePublicLeaderboard() {
-    const el = document.getElementById('publicLeaderboardBody');
-    if (!currentTeams.length || !teamsVisible) { el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater endnu</td></tr>'; return; }
-    const stats = currentTeams.map((t,i) => ({ idx:i, names:t.map(p=>p.navn).join(' & '), points:0, wins:0, losses:0, games:0 }));
-    allMatches.forEach(m => {
-      if (m.status==='completed' && m.teamA!=null && m.teamB!=null && m.scoreA!=null && m.scoreB!=null && stats[m.teamA] && stats[m.teamB]) {
-        stats[m.teamA].games++; stats[m.teamB].games++;
-        if (m.scoreA>m.scoreB) { stats[m.teamA].points+=3; stats[m.teamA].wins++; stats[m.teamB].losses++; }
-        else if (m.scoreB>m.scoreA) { stats[m.teamB].points+=3; stats[m.teamB].wins++; stats[m.teamA].losses++; }
-        else { stats[m.teamA].points++; stats[m.teamB].points++; }
-      }
-    });
-    const sorted = stats.slice().sort((a,b) => b.points-a.points || b.wins-a.wins);
-    if (!sorted.some(s=>s.games>0)) { el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater endnu</td></tr>'; return; }
-    el.innerHTML = sorted.map((s,i) => {
-      const wr = s.games ? ((s.wins/s.games)*100).toFixed(1)+'%' : '-';
-      return `<tr ${s.games?'':'style="opacity:0.5;"'}><td><strong>${i+1}</strong></td><td><strong>Hold ${s.idx+1}</strong><br><span style="font-size:0.75rem;color:var(--muted);">${s.names}</span></td><td style="text-align:center;"><strong>${s.points}</strong></td><td style="text-align:center;">${s.wins}</td><td style="text-align:center;">${s.losses}</td><td style="text-align:center;">${wr}</td></tr>`;
-    }).join('');
+  function renderLeaderboardTo(el, sorted) {
+    const empty = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater</td></tr>';
+    if (!currentTeams.length || !sorted.some(s=>s.games>0)) { el.innerHTML = empty; return; }
+    el.innerHTML = sorted.map((s,i) => { const wr = s.games?((s.wins/s.games)*100).toFixed(1)+'%':'-'; return `<tr ${s.games?'':'style="opacity:0.5;"'}><td><strong>${i+1}</strong></td><td><strong>Hold ${s.idx+1}</strong><br><span style="font-size:0.75rem;color:var(--muted);">${s.names}</span></td><td style="text-align:center;"><strong>${s.points}</strong></td><td style="text-align:center;">${s.wins}</td><td style="text-align:center;">${s.losses}</td><td style="text-align:center;">${wr}</td></tr>`; }).join('');
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // Announcements (public bulletin board)
-  // ═══════════════════════════════════════════════════════════════════
-  window.postAnnouncement = async () => {
-    const text = document.getElementById('messageText').value.trim();
-    if (!text) return showToast('⚠️ Skriv en besked');
-    try {
-      await push(ref(db, 'announcements'), { text, createdAt: Date.now(), active: true });
-      document.getElementById('messageText').value = '';
-      showToast('📢 Opslag offentliggjort');
-    } catch(err) { showToast('❌ ' + err.message); }
-  };
+  function updateLeaderboards() {
+    const sorted = calcStats();
+    renderLeaderboardTo(document.getElementById('leaderboardBody'), sorted);
+    if (teamsVisible) renderLeaderboardTo(document.getElementById('publicLeaderboardBody'), sorted);
+    else document.getElementById('publicLeaderboardBody').innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater endnu</td></tr>';
+  }
+  function updateLeaderboard() { updateLeaderboards(); }
+  function updatePublicLeaderboard() { updateLeaderboards(); }
 
-  window.deleteAnnouncement = async (key) => {
-    if (!confirm('Slet opslag?')) return;
-    await remove(ref(db, 'announcements/' + key));
-    showToast('Opslag slettet');
-  };
+  // ═══════════════════════════════════════════════════════════════════
+  // Announcements
+  // ═══════════════════════════════════════════════════════════════════
+  window.postAnnouncement = async () => { const text = document.getElementById('messageText').value.trim(); if (!text) return showToast('Skriv en besked'); try { await push(ref(db,'announcements'), { text, createdAt: Date.now(), active: true }); document.getElementById('messageText').value = ''; showToast('Opslag sendt'); } catch(err) { showToast(err.message); } };
+  window.deleteAnnouncement = async (key) => { if (!confirm('Slet?')) return; await remove(ref(db,'announcements/'+key)); showToast('Slettet'); };
 
   function renderPublicAnnouncements() {
     const el = document.getElementById('publicAnnouncements');
     const active = announcements.filter(a => a.active !== false);
     if (!active.length) { el.style.display = 'none'; return; }
     el.style.display = 'block';
-    el.innerHTML = `<div class="announcement-banner">
-      <div style="font-weight:700;color:#e65100;margin-bottom:6px;font-size:0.9rem;">📢 Beskeder fra arrangoren</div>
-      ${active.map(a => {
-        const t = new Date(a.createdAt).toLocaleString('da-DK', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-        return `<div class="ann-item"><div>${a.text}</div><div class="ann-time">${t}</div></div>`;
-      }).join('')}
-    </div>`;
+    el.innerHTML = `<div class="announcement-banner"><div style="font-weight:700;color:#e65100;margin-bottom:6px;">Beskeder fra arrangøren</div>${active.map(a => { const t = new Date(a.createdAt).toLocaleString('da-DK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); return `<div class="ann-item"><div>${esc(a.text)}</div><div class="ann-time">${t}</div></div>`; }).join('')}</div>`;
   }
 
   function renderAnnouncementsAdmin() {
     const el = document.getElementById('announcementsLog');
-    if (!announcements.length) { el.innerHTML = '<div class="empty-state" style="padding:8px;">Ingen opslag endnu</div>'; return; }
-    el.innerHTML = '<div style="display:grid;gap:8px;">' + announcements.map(a => {
-      const t = new Date(a.createdAt).toLocaleString('da-DK', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-      return `<div style="padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--gray);display:flex;justify-content:space-between;align-items:start;">
-        <div><div style="font-size:0.85rem;">${a.text}</div><div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">${t}</div></div>
-        <button onclick="deleteAnnouncement('${a._key}')" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:0.85rem;padding:4px;">🗑</button>
-      </div>`;
-    }).join('') + '</div>';
+    if (!announcements.length) { el.innerHTML = '<div class="empty-state">Ingen opslag</div>'; return; }
+    el.innerHTML = '<div style="display:grid;gap:8px;">' + announcements.map(a => { const t = new Date(a.createdAt).toLocaleString('da-DK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); return `<div style="padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--gray);display:flex;justify-content:space-between;"><div><div style="font-size:0.85rem;">${esc(a.text)}</div><div style="font-size:0.72rem;color:var(--muted);margin-top:4px;">${t}</div></div><button onclick="deleteAnnouncement('${a._key}')" style="background:none;border:none;cursor:pointer;color:#e53935;">Slet</button></div>`; }).join('') + '</div>';
   }
 
   // ═══════════════════════════════════════════════════════════════════
   // Exports
   // ═══════════════════════════════════════════════════════════════════
-  window.exportCSV = () => {
-    if (!participants.length) return showToast('Ingen deltagere');
-    const rows = [['Navn','Alder','Email','Telefon','Niveau','Onsket makker'],...participants.map(p=>[p.navn,p.alder||'',p.email||'',p.telefon||'',p.niveau,p.makker||''])];
-    const csv = rows.map(r=>r.map(v=>'"'+v+'"').join(',')).join('\n');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}));
-    a.download = 'padel_deltagere.csv'; a.click();
-  };
-
-  window.exportTeamsCSV = () => {
-    if (!currentTeams.length) return showToast('Ingen hold');
-    const rows = [['Hold','Deltagere'],...currentTeams.map((t,i)=>['Hold '+(i+1),t.map(p=>p.navn).join(', ')])];
-    const csv = rows.map(r=>r.map(v=>'"'+v+'"').join(',')).join('\n');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}));
-    a.download = 'padel_hold.csv'; a.click();
-  };
-
-  window.exportScheduleCSV = () => {
-    if (!allMatches.length) return showToast('Ingen kampe');
-    const rounds = {};
-    allMatches.forEach(m => { if(!rounds[m.round]) rounds[m.round]=[]; rounds[m.round].push(m); });
-    const totalRounds = Object.keys(rounds).length;
-    const rows = [['Runde','Bane','Hold A','Hold B','Status','Score'],...allMatches.map(m=>[
-      getRoundName(m.round,totalRounds), getCourtName(m.court),
-      m.teamA!=null&&m.teamA>=0?'Hold '+(m.teamA+1):'-', m.teamB!=null&&m.teamB>=0?'Hold '+(m.teamB+1):'-',
-      m.status, m.status==='completed'?(m.scoreA+'-'+m.scoreB):'-'
-    ])];
-    const csv = rows.map(r=>r.map(v=>'"'+v+'"').join(',')).join('\n');
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'}));
-    a.download = 'padel_kampplan.csv'; a.click();
-  };
+  window.exportCSV = () => { if (!participants.length) return showToast('Ingen'); const rows=[['Navn','Alder','Email','Telefon','Niveau','Makker'],...participants.map(p=>[p.navn,p.alder||'',p.email||'',p.telefon||'',p.niveau,p.makker||''])]; const csv=rows.map(r=>r.map(v=>'"'+v+'"').join(',')).join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'})); a.download='padel_deltagere.csv'; a.click(); };
+  window.exportTeamsCSV = () => { if (!currentTeams.length) return showToast('Ingen hold'); const rows=[['Hold','Deltagere'],...currentTeams.map((t,i)=>['Hold '+(i+1),t.map(p=>p.navn).join(', ')])]; const csv=rows.map(r=>r.map(v=>'"'+v+'"').join(',')).join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'})); a.download='padel_hold.csv'; a.click(); };
+  window.exportScheduleCSV = () => { if (!allMatches.length) return showToast('Ingen'); const tot = Math.max(...allMatches.map(m=>m.round)); const rows=[['Runde','Bane','Hold A','Hold B','Status','Score'],...allMatches.map(m=>[getRoundName(m.round,tot),getCourtName(m.court),m.teamA!=null?'Hold '+(m.teamA+1):'-',m.teamB!=null?'Hold '+(m.teamB+1):'-',m.status,m.status==='completed'?(m.scoreA+'-'+m.scoreB):'-'])]; const csv=rows.map(r=>r.map(v=>'"'+v+'"').join(',')).join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'})); a.download='padel_kampplan.csv'; a.click(); };
 
   // ═══════════════════════════════════════════════════════════════════
   // Tab switching
   // ═══════════════════════════════════════════════════════════════════
-  window.switchTab = (name, btn) => {
-    const mainSection = document.querySelector('body > main');
-    mainSection.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
-    mainSection.querySelectorAll('.tabs .tab').forEach(el=>el.classList.remove('active'));
-    const tabEl = mainSection.querySelector('#tab-'+name) || document.getElementById('tab-'+name);
-    if (tabEl) tabEl.classList.add('active');
-    if (btn) btn.classList.add('active');
-  };
-
-  window.switchAdminTab = (name, btn) => {
-    const admin = document.getElementById('adminDashboard');
-    admin.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    admin.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-    const tabEl = document.getElementById('admin-tab-' + name) || document.getElementById('tab-' + name);
-    if (tabEl) { tabEl.classList.add('active'); if (btn) btn.classList.add('active'); }
-  };
+  window.switchTab = (name, btn) => { const m = document.querySelector('body > main'); m.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active')); m.querySelectorAll('.tabs .tab').forEach(el=>el.classList.remove('active')); const t = m.querySelector('#tab-'+name)||document.getElementById('tab-'+name); if(t)t.classList.add('active'); if(btn)btn.classList.add('active'); };
+  window.switchAdminTab = (name, btn) => { const a = document.getElementById('adminDashboard'); a.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active')); a.querySelectorAll('.tab').forEach(el=>el.classList.remove('active')); const t = document.getElementById('admin-tab-'+name)||document.getElementById('tab-'+name); if(t){t.classList.add('active');if(btn)btn.classList.add('active');} };
 
   // ═══════════════════════════════════════════════════════════════════
   // Helpers
   // ═══════════════════════════════════════════════════════════════════
-  window.copyLink = () => navigator.clipboard.writeText(location.href).then(()=>showToast('🔗 Link kopieret!'));
-
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'), 2500);
-  }
-
-  // ESC to close modals
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
-    }
-  });
-
-  // Close autocomplete on click outside
-  document.addEventListener('click', e => {
-    if (!e.target.closest('.autocomplete-wrapper')) {
-      document.querySelectorAll('.autocomplete-list').forEach(l => l.classList.remove('show'));
-    }
-  });
-
+  window.copyLink = () => navigator.clipboard.writeText(location.href).then(()=>showToast('Link kopieret!'));
+  function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2500); }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active')); });
+  document.addEventListener('click', e => { if (!e.target.closest('.autocomplete-wrapper')) document.querySelectorAll('.autocomplete-list').forEach(l => l.classList.remove('show')); });
 </script>
 </body>
 </html>
