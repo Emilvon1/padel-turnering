@@ -1279,7 +1279,9 @@
     const telefon = document.getElementById('telefon')?.value?.trim() || '';
     const niveau = document.querySelector('input[name="niveau"]:checked')?.value;
     const makker = document.getElementById('makker').value.trim();
-    if (!navn || !alder || !niveau) return;
+    if (!navn) return showToast('Udfyld dit navn');
+    if (!alder || isNaN(alder)) return showToast('Udfyld din alder');
+    if (!niveau) return showToast('Vælg dit niveau');
     if (participants.find(p => p.navn.toLowerCase() === navn.toLowerCase())) return showToast(navn + ' er allerede tilmeldt');
     const btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.textContent = 'Gemmer...';
