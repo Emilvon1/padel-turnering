@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Paddeltennis Turnering</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
@@ -21,12 +21,18 @@
       --shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--green-pale); color: var(--text); min-height: 100vh; }
-    header { background: var(--green); color: white; padding: 24px 20px 20px; text-align: center; position: relative; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--green-pale); color: var(--text); min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+    header { background: var(--green); color: white; padding: 20px 20px 18px; text-align: center; position: relative; padding-top: calc(20px + env(safe-area-inset-top)); padding-left: calc(20px + env(safe-area-inset-left)); padding-right: calc(20px + env(safe-area-inset-right)); }
     header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
     header p { margin-top: 6px; opacity: 0.85; font-size: 0.95rem; }
+    @media (max-width: 520px) {
+      header { padding: 12px 14px 14px; padding-top: calc(12px + env(safe-area-inset-top)); text-align: left; }
+      header h1 { font-size: 1.1rem; padding-right: 140px; }
+      header p { font-size: 0.85rem; }
+      .header-btns { top: calc(12px + env(safe-area-inset-top)); right: 14px; }
+    }
     .badge { display: inline-block; background: var(--yellow); color: #333; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-top: 10px; }
-    main { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+    main { max-width: 720px; margin: 0 auto; padding: 20px 16px 80px; }
     .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px; }
     .card h2 { font-size: 1.1rem; font-weight: 700; color: var(--green); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -76,8 +82,9 @@
     .empty-state { text-align: center; color: var(--muted); padding: 24px 0; font-size: 0.9rem; }
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #333; color: white; padding: 12px 20px; border-radius: 30px; font-size: 0.88rem; font-weight: 600; transition: transform 0.3s ease; z-index: 99999; pointer-events: none; }
     .toast.show { transform: translateX(-50%) translateY(0); }
-    .tabs { display: flex; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--border); margin-bottom: 16px; flex-wrap: wrap; }
-    .tab { flex: 1; min-width: 80px; padding: 9px 8px; background: white; border: none; cursor: pointer; font-size: 0.75rem; font-weight: 600; color: var(--muted); transition: all 0.15s; border-right: 1.5px solid var(--border); text-align: center; }
+    .tabs { display: flex; border-radius: 10px; overflow-x: auto; overflow-y: hidden; border: 1.5px solid var(--border); margin-bottom: 16px; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { flex: 0 0 auto; padding: 10px 16px; background: white; border: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--muted); transition: all 0.15s; border-right: 1.5px solid var(--border); text-align: center; white-space: nowrap; }
     .tab:last-child { border-right: none; }
     .tab.active { background: var(--green); color: white; }
     .tab-content { display: none; }
@@ -90,9 +97,10 @@
     .link-row { display: flex; gap: 8px; align-items: center; background: var(--gray); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; margin-top: 8px; font-size: 0.82rem; word-break: break-all; color: var(--muted); }
     .copy-btn { background: var(--green); color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
     .admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    .admin-table th { background: var(--green-pale); padding: 10px; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border); }
-    .admin-table td { padding: 10px; border-bottom: 1px solid var(--border); }
+    .admin-table th { background: var(--green-pale); padding: 10px 8px; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border); white-space: nowrap; }
+    .admin-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     .admin-table tr:hover { background: #fafafa; }
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -24px; padding: 0 24px; }
     .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 50000; align-items: center; justify-content: center; }
     .modal.active { display: flex; }
     .modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
@@ -100,7 +108,7 @@
     .announcement-banner .ann-item { padding: 8px 0; border-bottom: 1px solid #ffe0b2; font-size: 0.9rem; }
     .announcement-banner .ann-item:last-child { border-bottom: none; }
     .announcement-banner .ann-time { font-size: 0.72rem; color: var(--muted); }
-    .bracket-container { overflow-x: auto; padding: 20px 0; }
+    .bracket-container { overflow-x: auto; padding: 20px 24px; -webkit-overflow-scrolling: touch; margin: 0 -24px; }
     .bracket { display: flex; align-items: stretch; min-width: max-content; }
     .bracket-round { display: flex; flex-direction: column; min-width: 180px; position: relative; }
     .bracket-round-title { font-size: 0.75rem; font-weight: 700; color: var(--green); text-transform: uppercase; text-align: center; margin-bottom: 8px; }
@@ -224,8 +232,11 @@
     .court-golden-badge { display: inline-block; background: #ffd700; color: #333; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; }
 
     /* Header buttons row */
-    .header-btns { position: absolute; top: 10px; right: 10px; display: flex; gap: 6px; }
-    .header-btns button { background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
+    .header-btns { position: absolute; top: calc(10px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); display: flex; gap: 6px; }
+    .header-btns button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.7); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; white-space: nowrap; }
+    @media (max-width: 520px) {
+      .header-btns button { padding: 5px 10px; font-size: 0.75rem; }
+    }
   </style>
 </head>
 <body>
@@ -260,7 +271,7 @@
         </div>
         <div class="field">
           <label>Alder *</label>
-          <input type="number" id="alder" placeholder="F.eks. 25" min="5" max="99" required />
+          <input type="number" id="alder" inputmode="numeric" pattern="[0-9]*" placeholder="F.eks. 25" min="5" max="99" required />
         </div>
       </div>
       <div class="form-row" id="optionalFieldsRow">
@@ -337,15 +348,17 @@
 
     <div id="tab-rangliste-public" class="tab-content">
       <div class="info-box">Live rangliste - opdateres når kampe afslutter.</div>
-      <table class="admin-table" style="font-size:0.9rem;">
-        <thead><tr>
-          <th style="width:50px;">Plads</th><th>Hold</th><th style="width:70px;">Point</th>
-          <th style="width:60px;">Sejre</th><th style="width:60px;">Ned.</th><th style="width:100px;">Sejr%</th>
-        </tr></thead>
-        <tbody id="publicLeaderboardBody">
-          <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater endnu</td></tr>
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table class="admin-table" style="font-size:0.9rem;min-width:480px;">
+          <thead><tr>
+            <th style="width:44px;">#</th><th>Hold</th><th style="width:56px;">Point</th>
+            <th style="width:50px;">Sejre</th><th style="width:50px;">Ned.</th><th style="width:68px;">Sejr%</th>
+          </tr></thead>
+          <tbody id="publicLeaderboardBody">
+            <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater endnu</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </main>
