@@ -164,8 +164,8 @@
     .bracket { display: flex; align-items: stretch; min-width: max-content; }
     .bracket-round { display: flex; flex-direction: column; min-width: 180px; position: relative; }
     .bracket-round-title { font-size: 0.75rem; font-weight: 700; color: var(--green); text-transform: uppercase; text-align: center; margin-bottom: 8px; }
-    .bracket-matches { display: flex; flex-direction: column; flex: 1; justify-content: space-around; gap: 8px; }
-    .bracket-match { border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); position: relative; }
+    .bracket-matches { display: flex; flex-direction: column; flex: 1; justify-content: space-around; gap: 16px; }
+    .bracket-match { border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); position: relative; padding-bottom: 16px; }
     .bracket-match.completed { border-color: var(--green-light); }
     .bracket-match.active { border-color: #e65100; }
     .bracket-team-row { display: flex; justify-content: space-between; padding: 8px 10px; font-size: 0.8rem; border-bottom: 1px solid var(--border); }
@@ -2236,7 +2236,7 @@
         html += `<div class="bracket-match ${cls}"><div class="bracket-bane">${getCourtName(m.court)}</div><div class="bracket-team-row ${w1}"><span>${n1}</span><span class="score">${s1}</span></div><div class="bracket-team-row ${w2}"><span>${n2}</span><span class="score">${s2}</span></div></div>`;
       });
       html += '</div></div>';
-      if (ri < rn.length - 1) { const mc = rounds[r].length; const pairs = Math.floor(mc/2); if (pairs>0){html+='<div class="bracket-connector">';for(let p=0;p<pairs;p++)html+='<div class="bracket-connector-pair"><div class="conn-top"></div><div class="conn-bot"></div></div>';if(mc%2===1)html+='<div style="flex:1;display:flex;align-items:center;"><div style="width:100%;height:1.5px;background:var(--border);"></div></div>';html+='</div>';}}
+      if (ri < rn.length - 1) { const mc = rounds[r].length; const pairs = Math.floor(mc/2); if (mc===1){html+='<div class="bracket-connector"><div style="flex:1;display:flex;align-items:center;"><div style="width:100%;height:2px;background:#bbb;"></div></div></div>';}else if(pairs>0){html+='<div class="bracket-connector">';for(let p=0;p<pairs;p++)html+='<div class="bracket-connector-pair"><div class="conn-top"></div><div class="conn-bot"></div></div>';if(mc%2===1)html+='<div style="flex:1;display:flex;align-items:center;"><div style="width:100%;height:1.5px;background:var(--border);"></div></div>';html+='</div>';}}
     });
     html += '</div></div>';
     el.innerHTML = html;
