@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Paddeltennis Turnering</title>
+  <title>Padel Turnering</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -14,45 +17,66 @@
       --green-pale: #e8f5e9;
       --yellow: #f9c23c;
       --gray: #f5f5f5;
+      --surface: #ffffff;
       --text: #1a1a1a;
       --muted: #666;
       --border: #ddd;
       --radius: 12px;
       --shadow: 0 2px 12px rgba(0,0,0,0.08);
+      /* Referee panel — light theme defaults */
+      --ref-bg: #f0f2f5;
+      --ref-text: #1a1a1a;
+      --ref-muted: #666;
+      --ref-card: #ffffff;
+      --ref-card-hover: #e8eaed;
+      --ref-border: #ccc;
+      --ref-disabled: #ccc;
     }
+    html { color-scheme: light; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--green-pale); color: var(--text); min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
-    header { background: var(--green); color: white; padding: 20px 20px 18px; text-align: center; position: relative; padding-top: calc(20px + env(safe-area-inset-top)); padding-left: calc(20px + env(safe-area-inset-left)); padding-right: calc(20px + env(safe-area-inset-right)); }
-    header h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
-    header p { margin-top: 6px; opacity: 0.85; font-size: 0.95rem; }
-    @media (max-width: 520px) {
-      header { padding: 12px 14px 14px; padding-top: calc(12px + env(safe-area-inset-top)); text-align: left; }
-      header h1 { font-size: 1.1rem; padding-right: 140px; }
-      header p { font-size: 0.85rem; }
-      .header-btns { top: calc(12px + env(safe-area-inset-top)); right: 14px; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--green-pale); color: var(--text); min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); -webkit-font-smoothing: antialiased; }
+    header { background: var(--green); color: white; padding: 0; padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+    .header-top { display: flex; align-items: center; padding: 10px 14px; gap: 10px; }
+    .header-center { flex: 1; text-align: center; min-width: 0; }
+    header h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    header p { margin-top: 3px; opacity: 0.85; font-size: 0.88rem; }
+    .header-bottom { text-align: center; padding: 0 14px 12px; }
+    @media (max-width: 480px) {
+      header h1 { font-size: 1.25rem; }
+      header p { font-size: 0.82rem; }
     }
     .badge { display: inline-block; background: var(--yellow); color: #333; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-top: 10px; }
     main { max-width: 720px; margin: 0 auto; padding: 20px 16px 80px; }
-    .card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px; }
+    .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; margin-bottom: 20px; animation: cardIn 350ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+    .card:nth-child(2) { animation-delay: 60ms; }
+    @keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .card h2 { font-size: 1.1rem; font-weight: 700; color: var(--green); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
     .field { display: flex; flex-direction: column; gap: 5px; }
     .field.full { grid-column: 1 / -1; }
     label { font-size: 0.82rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
-    input, select, textarea { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.15s; background: white; }
+    input, select, textarea { border: 1.5px solid var(--border); border-radius: 8px; min-height: 44px; padding: 11px 12px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.15s; background: var(--surface); }
+    textarea { min-height: 80px; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green-light); }
+    input:focus-visible, select:focus-visible, textarea:focus-visible,
+    button:focus-visible, a:focus-visible, .tab:focus-visible,
+    .filter-pill:focus-visible, .copy-btn:focus-visible, [role="button"]:focus-visible,
+    .level-option input[type="radio"]:focus-visible + label { outline: 2px solid var(--green-light); outline-offset: 2px; }
+    /* Light ring for buttons sitting on green/dark surfaces */
+    .header-btns button:focus-visible, .admin-float-bar button:focus-visible,
+    .referee-header button:focus-visible, .court-check input:focus-visible { outline-color: #fff; }
     .level-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .level-option { position: relative; }
     .level-option input[type="radio"] { position: absolute; opacity: 0; width: 0; }
-    .level-option label { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 2px solid var(--border); border-radius: 10px; padding: 10px 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--text); transition: all 0.15s; background: var(--gray); }
+    .level-option label { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 2px solid var(--border); border-radius: 10px; padding: 10px 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--text); transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease; background: var(--gray); }
     .level-option input[type="radio"]:checked + label { border-color: var(--green-light); background: var(--green-pale); color: var(--green); }
     .level-option label span.emoji { font-size: 1.3rem; }
-    .btn { width: 100%; padding: 13px; background: var(--green); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.15s, transform 0.1s; margin-top: 8px; }
-    .btn:hover { background: #256030; }
-    .btn:active { transform: scale(0.98); }
+    .btn { width: 100%; padding: 13px; background: var(--green); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.15s ease, transform 160ms cubic-bezier(0.23, 1, 0.32, 1); margin-top: 8px; }
+    @media (hover: hover) and (pointer: fine) { .btn:hover { background: #256030; } }
+    .btn:active { transform: scale(0.97); }
     .btn:disabled { background: #aaa; cursor: not-allowed; transform: none; }
-    .btn-secondary { background: white; color: var(--green); border: 2px solid var(--green); margin-top: 10px; }
+    .btn-secondary { background: var(--surface); color: var(--green); border: 2px solid var(--green); margin-top: 10px; }
     .btn-secondary:hover { background: var(--green-pale); }
     .btn-small { width: auto; padding: 6px 12px; font-size: 0.8rem; margin: 0; }
     .count-bar { display: flex; align-items: center; justify-content: space-between; background: var(--green-pale); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.9rem; }
@@ -63,7 +87,7 @@
     .participant-info { flex: 1; }
     .participant-name { font-weight: 700; font-size: 0.92rem; }
     .participant-meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
-    .level-tag { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
+    .level-tag { font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; }
     .tag-ny { background: #e3f2fd; color: #1565c0; }
     .tag-begynder { background: #fff3e0; color: #e65100; }
     .tag-øvet { background: #e8f5e9; color: #2e7d32; }
@@ -80,63 +104,77 @@
     .match-vs { font-size: 0.75rem; font-weight: 800; color: var(--muted); text-align: center; }
     .match-num { font-size: 0.68rem; color: var(--muted); font-weight: 600; margin-bottom: 4px; text-align: center; }
     .empty-state { text-align: center; color: var(--muted); padding: 24px 0; font-size: 0.9rem; }
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #333; color: white; padding: 12px 20px; border-radius: 30px; font-size: 0.88rem; font-weight: 600; transition: transform 0.3s ease; z-index: 99999; pointer-events: none; }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-    .tabs { display: flex; border-radius: 10px; overflow-x: auto; overflow-y: hidden; border: 1.5px solid var(--border); margin-bottom: 16px; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); opacity: 0; background: #333; color: white; padding: 12px 20px; border-radius: 30px; font-size: 0.88rem; font-weight: 600; transition: transform 250ms cubic-bezier(0.23, 1, 0.32, 1), opacity 250ms cubic-bezier(0.23, 1, 0.32, 1); z-index: 99999; pointer-events: none; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; transition: transform 250ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms ease; }
+    .toast.hide { transform: translateX(-50%) translateY(80px); opacity: 0; transition: transform 200ms ease-in, opacity 150ms ease; }
+    .tabs { display: flex; border-radius: 10px; overflow-x: auto; overflow-y: hidden; border: none; border-bottom: 1.5px solid var(--border); margin-bottom: 16px; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; outline: none; -webkit-tap-highlight-color: transparent; }
     .tabs::-webkit-scrollbar { display: none; }
-    .tab { flex: 0 0 auto; padding: 10px 16px; background: white; border: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--muted); transition: all 0.15s; border-right: 1.5px solid var(--border); text-align: center; white-space: nowrap; }
+    .tabs:focus { outline: none; }
+    .tab { flex: 0 0 auto; min-height: 44px; padding: 10px 16px; background: var(--surface); border: none; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--muted); transition: background 0.15s ease, color 0.15s ease, transform 160ms cubic-bezier(0.23, 1, 0.32, 1); border-right: 1.5px solid var(--border); text-align: center; white-space: nowrap; }
     .tab:last-child { border-right: none; }
+    .tab:active { transform: scale(0.97); }
     .tab.active { background: var(--green); color: white; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .info-box { background: var(--green-pale); border-left: 3px solid var(--green-light); border-radius: 6px; padding: 10px 12px; font-size: 0.82rem; color: var(--green); margin-bottom: 14px; }
+    .info-box { background: var(--green-pale); border-radius: 8px; padding: 11px 14px; font-size: 0.82rem; color: var(--green); margin-bottom: 14px; }
     .connection-bar { font-size: 0.75rem; color: var(--muted); text-align: center; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
     .status-dot.connected { background: #4caf50; }
     .status-dot.error { background: #e53935; }
     .link-row { display: flex; gap: 8px; align-items: center; background: var(--gray); border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; margin-top: 8px; font-size: 0.82rem; word-break: break-all; color: var(--muted); }
-    .copy-btn { background: var(--green); color: white; border: none; border-radius: 6px; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .copy-btn { background: var(--green); color: white; border: none; border-radius: 6px; min-height: 44px; padding: 5px 16px; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: background 0.15s ease, transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+    .copy-btn:active { transform: scale(0.97); }
     .admin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     .admin-table th { background: var(--green-pale); padding: 10px 8px; text-align: left; font-weight: 700; border-bottom: 2px solid var(--border); white-space: nowrap; }
     .admin-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    .admin-table tr:hover { background: #fafafa; }
+    .admin-table tr:hover { background: var(--gray); }
+    .match-row-default { background: var(--gray); color: var(--text); }
+    .match-row-active { background: #fff8f0; color: var(--text); }
+    .score-input { background: var(--surface); color: var(--text); }
     .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -24px; padding: 0 24px; }
-    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 50000; align-items: center; justify-content: center; }
-    .modal.active { display: flex; }
-    .modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+    .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0); z-index: 50000; align-items: center; justify-content: center; transition: background 200ms ease; }
+    .modal.active { display: flex; background: rgba(0,0,0,0.5); }
+    .modal.active .modal-content { animation: modalIn 250ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .modal-content { background: var(--surface); border-radius: 12px; padding: 24px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
     .announcement-banner { background: #fff3e0; border: 1.5px solid #ffb74d; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; }
     .announcement-banner .ann-item { padding: 8px 0; border-bottom: 1px solid #ffe0b2; font-size: 0.9rem; }
     .announcement-banner .ann-item:last-child { border-bottom: none; }
-    .announcement-banner .ann-time { font-size: 0.72rem; color: var(--muted); }
+    .announcement-banner .ann-time { font-size: 0.78rem; color: var(--muted); }
     .bracket-container { overflow-x: auto; padding: 20px 24px; -webkit-overflow-scrolling: touch; margin: 0 -24px; }
     .bracket { display: flex; align-items: stretch; min-width: max-content; }
     .bracket-round { display: flex; flex-direction: column; min-width: 180px; position: relative; }
     .bracket-round-title { font-size: 0.75rem; font-weight: 700; color: var(--green); text-transform: uppercase; text-align: center; margin-bottom: 8px; }
     .bracket-matches { display: flex; flex-direction: column; flex: 1; justify-content: space-around; gap: 8px; }
-    .bracket-match { border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; background: white; position: relative; }
+    .bracket-match { border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); position: relative; }
     .bracket-match.completed { border-color: var(--green-light); }
     .bracket-match.active { border-color: #e65100; }
     .bracket-team-row { display: flex; justify-content: space-between; padding: 8px 10px; font-size: 0.8rem; border-bottom: 1px solid var(--border); }
     .bracket-team-row:last-child { border-bottom: none; }
     .bracket-team-row.winner { background: var(--green-pale); font-weight: 700; }
     .bracket-team-row .score { font-weight: 700; min-width: 20px; text-align: right; }
-    .bracket-bane { font-size: 0.65rem; color: var(--muted); text-align: center; padding: 2px; background: var(--gray); }
-    .bracket-connector { display: flex; flex-direction: column; justify-content: space-around; width: 32px; flex-shrink: 0; }
+    .bracket-bane { font-size: 0.72rem; color: var(--muted); text-align: center; padding: 2px; background: var(--gray); }
+    .bracket-connector { display: flex; flex-direction: column; justify-content: space-around; width: 40px; flex-shrink: 0; }
     .bracket-connector-pair { display: flex; flex-direction: column; flex: 1; justify-content: center; position: relative; }
-    .bracket-connector-pair::before { content: ''; position: absolute; right: 0; top: 25%; bottom: 25%; width: 1.5px; background: var(--border); }
-    .bracket-connector-pair::after { content: ''; position: absolute; right: 0; top: 50%; width: 12px; height: 1.5px; background: var(--border); }
+    /* Vertical bar connecting the two match stubs, centered horizontally */
+    .bracket-connector-pair::before { content: ''; position: absolute; left: 50%; top: 25%; bottom: 25%; width: 2px; background: #bbb; transform: translateX(-50%); }
+    /* Horizontal line from vertical bar midpoint to next round */
+    .bracket-connector-pair::after { content: ''; position: absolute; left: 50%; right: 0; top: 50%; height: 2px; background: #bbb; }
     .bracket-connector-pair .conn-top,
     .bracket-connector-pair .conn-bot { flex: 1; position: relative; }
-    .bracket-connector-pair .conn-top::after { content: ''; position: absolute; right: 0; top: 50%; width: 12px; height: 1.5px; background: var(--border); }
-    .bracket-connector-pair .conn-bot::after { content: ''; position: absolute; right: 0; top: 50%; width: 12px; height: 1.5px; background: var(--border); }
+    /* Stub from top match center going right to vertical bar */
+    .bracket-connector-pair .conn-top::after { content: ''; position: absolute; left: 0; right: 50%; top: 50%; height: 2px; background: #bbb; }
+    /* Stub from bottom match center going right to vertical bar */
+    .bracket-connector-pair .conn-bot::after { content: ''; position: absolute; left: 0; right: 50%; top: 50%; height: 2px; background: #bbb; }
     .round-header { background: var(--green); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; margin: 16px 0 10px; text-align: center; }
     .round-header:first-child { margin-top: 0; }
     .filter-pills { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
-    .filter-pill { padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 20px; background: white; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--muted); transition: all 0.15s; }
+    .filter-pill { padding: 6px 14px; border: 1.5px solid var(--border); border-radius: 20px; background: var(--surface); cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--muted); transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+    .filter-pill:active { transform: scale(0.97); }
     .filter-pill.active { background: var(--green); color: white; border-color: var(--green); }
     .inline-edit input, .inline-edit select { padding: 4px 8px; font-size: 0.82rem; border: 1.5px solid var(--green-light); border-radius: 6px; }
     .autocomplete-wrapper { position: relative; }
-    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; max-height: 150px; overflow-y: auto; display: none; }
+    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; max-height: 150px; overflow-y: auto; display: none; }
     .autocomplete-list.show { display: block; }
     .autocomplete-item { padding: 8px 12px; cursor: pointer; font-size: 0.85rem; }
     .autocomplete-item:hover { background: var(--green-pale); }
@@ -146,17 +184,38 @@
     .team-member-draggable.dragging { opacity: 0.4; }
     .team-card.drag-over { border-color: var(--green-light); background: var(--green-pale); }
     .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+    .checkbox-row-compact { display: flex; align-items: center; gap: 7px; padding: 3px 0; }
+    .checkbox-row-compact input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); }
+    .checkbox-row-compact label { font-size: 0.85rem; font-weight: 500; color: var(--text); cursor: pointer; text-transform: none; letter-spacing: 0; }
+    .admin-tabs .tab { flex: 1; text-align: center; }
+    .public-tabs .tab { flex: 1; text-align: center; }
+    .crit-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 30px; }
+    .crit-modes { display: flex; gap: 3px; flex-shrink: 0; }
+    .mode-opt { display: flex; }
+    .mode-opt input[type="radio"] { display: none; }
+    .mode-opt span { display: block; font-size: 0.65rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; border: 1.5px solid var(--border); cursor: pointer; background: var(--surface); color: var(--muted); transition: background 0.12s, color 0.12s, border-color 0.12s, transform 100ms cubic-bezier(0.23, 1, 0.32, 1); white-space: nowrap; }
+    .mode-opt span:active { transform: scale(0.95); }
+    .mode-opt input[type="radio"]:checked + span { background: var(--green); color: white; border-color: var(--green); }
+    @media (hover: hover) and (pointer: fine) { .mode-opt span:hover { border-color: var(--green-light); color: var(--green); } }
     .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--green); }
     .checkbox-row label { font-size: 0.9rem; text-transform: none; font-weight: 500; color: var(--text); cursor: pointer; }
-    .admin-float-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--green); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; font-size: 0.85rem; box-shadow: 0 -2px 12px rgba(0,0,0,0.2); }
-    .admin-float-bar button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.82rem; }
+    .admin-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 520px) { .admin-form-grid { grid-template-columns: 1fr; gap: 12px; } }
+    .admin-float-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--green); color: white; padding: 10px 16px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); padding-left: calc(16px + env(safe-area-inset-left)); padding-right: calc(16px + env(safe-area-inset-right)); display: flex; justify-content: space-between; align-items: center; z-index: 9999; font-size: 0.85rem; box-shadow: 0 -2px 12px rgba(0,0,0,0.2); gap: 8px; }
+    .admin-float-bar > span { white-space: nowrap; font-weight: 600; }
+    .admin-float-bar button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); min-height: 44px; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.82rem; white-space: nowrap; }
     .admin-float-bar button:hover { background: rgba(255,255,255,0.3); }
+    @media (max-width: 480px) {
+      .admin-float-bar > span { display: none; }
+      .admin-float-bar > div { display: flex; gap: 8px; flex: 1; }
+      .admin-float-bar > div button { flex: 1; font-size: 0.8rem; }
+    }
     .bane-tag { display: inline-block; background: var(--green-pale); color: var(--green); font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; }
     .winner-banner { background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%); color: #333; padding: 20px; border-radius: 12px; text-align: center; margin: 16px 0; }
     .winner-banner h3 { font-size: 1.3rem; margin-bottom: 4px; }
     .winner-banner .trophy { font-size: 2rem; }
     .court-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-    .court-card { border: 2px solid var(--border); border-radius: 10px; overflow: hidden; background: white; }
+    .court-card { border: 2px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
     .court-card.active { border-color: #e65100; }
     .court-card-header { padding: 10px 14px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.4px; color: white; background: var(--green); display: flex; justify-content: space-between; align-items: center; }
     .court-card.active .court-card-header { background: #e65100; }
@@ -171,55 +230,65 @@
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
     /* ═══ Referee / Scorekeeper styles ═══ */
-    .referee-screen { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #1a1a2e; z-index: 60000; overflow: auto; color: white; }
+    .referee-screen { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--ref-bg); z-index: 60000; overflow: auto; color: var(--ref-text); }
     .referee-screen.active { display: block; }
     .referee-header { background: #e65100; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
-    .referee-header h2 { font-size: 1.2rem; font-weight: 800; }
+    .referee-header h2 { font-size: 1.2rem; font-weight: 800; color: white; }
     .referee-header button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 8px 14px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.85rem; }
     .court-selector { max-width: 500px; margin: 40px auto; padding: 0 20px; }
-    .court-selector h3 { font-size: 1.3rem; text-align: center; margin-bottom: 24px; color: #ccc; }
-    .court-check { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: rgba(255,255,255,0.08); border-radius: 12px; margin-bottom: 10px; cursor: pointer; transition: background 0.15s; }
-    .court-check:hover { background: rgba(255,255,255,0.14); }
+    .court-selector h3 { font-size: 1.3rem; text-align: center; margin-bottom: 24px; color: var(--ref-muted); }
+    .court-check { display: flex; align-items: center; gap: 14px; padding: 16px 20px; background: var(--ref-card); border-radius: 12px; margin-bottom: 10px; cursor: pointer; transition: background 0.15s; }
+    .court-check:hover { background: var(--ref-card-hover); }
     .court-check input[type="checkbox"] { width: 24px; height: 24px; accent-color: #e65100; flex-shrink: 0; }
-    .court-check label { font-size: 1.1rem; font-weight: 600; cursor: pointer; flex: 1; }
-    .court-check .court-status { font-size: 0.8rem; color: #aaa; }
+    .court-check label { font-size: 1.1rem; font-weight: 600; cursor: pointer; flex: 1; color: var(--ref-text); }
+    .court-check .court-status { font-size: 0.8rem; color: var(--ref-muted); }
     .referee-start-btn { display: block; max-width: 500px; margin: 24px auto; padding: 18px; background: #e65100; color: white; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: 800; cursor: pointer; width: calc(100% - 40px); }
-    .referee-start-btn:disabled { background: #555; cursor: not-allowed; }
+    .referee-start-btn:disabled { background: var(--ref-disabled); cursor: not-allowed; color: var(--ref-muted); }
 
     /* Scorekeeper match card */
-    .sk-match { background: #16213e; border-radius: 16px; margin: 16px; overflow: hidden; }
+    .sk-match { background: var(--ref-card); border-radius: 16px; margin: 16px; overflow: hidden; }
     .sk-match.golden-point { border: 3px solid #ffd700; box-shadow: 0 0 20px rgba(255,215,0,0.25); }
-    .sk-match-header { padding: 12px 16px; background: rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: #aaa; }
+    .sk-match-header { padding: 12px 16px; background: var(--ref-card-hover); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--ref-muted); }
     .sk-match-header .sk-bane { font-weight: 700; color: #e65100; }
     .sk-golden-label { background: #ffd700; color: #333; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 0.75rem; animation: pulse 1s infinite; }
     .sk-scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 16px; gap: 8px; }
     .sk-team { text-align: center; }
-    .sk-team-name { font-size: 0.9rem; font-weight: 600; color: #ccc; margin-bottom: 8px; min-height: 2.4em; }
+    .sk-team-name { font-size: 0.9rem; font-weight: 600; color: var(--ref-muted); margin-bottom: 8px; min-height: 2.4em; }
     .sk-serve { font-size: 1.4rem; cursor: pointer; opacity: 0.3; transition: opacity 0.2s; margin-bottom: 4px; }
     .sk-serve.active { opacity: 1; }
-    .sk-games { font-size: 3.5rem; font-weight: 900; color: white; line-height: 1; }
+    .sk-games { font-size: 3.5rem; font-weight: 900; color: var(--ref-text); line-height: 1; }
     .sk-points { font-size: 1.6rem; font-weight: 700; color: #e65100; margin-top: 4px; }
-    .sk-vs { font-size: 0.9rem; color: #555; font-weight: 700; }
+    .sk-vs { font-size: 0.9rem; color: var(--ref-muted); font-weight: 700; }
     .sk-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-    .sk-point-btn { padding: 32px 16px; border: none; font-size: 1.3rem; font-weight: 800; cursor: pointer; transition: background 0.1s, transform 0.05s; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .sk-point-btn { padding: 32px 16px; border: none; font-size: 1.3rem; font-weight: 800; cursor: pointer; transition: background 0.1s ease, transform 100ms cubic-bezier(0.23, 1, 0.32, 1); -webkit-tap-highlight-color: transparent; user-select: none; }
     .sk-point-btn:active { transform: scale(0.97); }
     .sk-point-btn.team-a { background: #1565c0; color: white; border-radius: 0 0 0 16px; }
     .sk-point-btn.team-a:active { background: #0d47a1; }
     .sk-point-btn.team-b { background: #c62828; color: white; border-radius: 0 0 16px 0; }
     .sk-point-btn.team-b:active { background: #b71c1c; }
     .sk-undo-row { display: flex; justify-content: center; padding: 8px 16px; gap: 10px; }
-    .sk-undo-btn { background: rgba(255,255,255,0.08); color: #aaa; border: 1px solid rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
-    .sk-undo-btn:hover { background: rgba(255,255,255,0.15); }
+    .sk-undo-btn { background: var(--ref-card-hover); color: var(--ref-muted); border: 1px solid var(--ref-border); padding: 6px 16px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
+    .sk-undo-btn:hover { background: var(--ref-card); }
     .sk-finish-btn { background: #4caf50; color: white; border: none; padding: 8px 20px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
 
     /* Timer */
     .sk-timer { text-align: center; padding: 10px 16px; }
-    .sk-timer-display { font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums; color: white; }
+    .sk-timer-display { font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--ref-text); }
     .sk-timer-display.time-up { color: #ff4444; animation: flash-red 0.6s infinite; }
     @keyframes flash-red { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     .sk-timer-controls { display: flex; gap: 8px; justify-content: center; margin-top: 6px; flex-wrap: wrap; }
-    .sk-timer-controls button { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
-    .sk-timer-controls input { width: 60px; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; text-align: center; font-size: 0.85rem; }
+    .sk-timer-controls button { background: var(--ref-card-hover); color: var(--ref-text); border: 1px solid var(--ref-border); padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
+    .sk-timer-controls input { width: 60px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--ref-border); background: var(--ref-card-hover); color: var(--ref-text); text-align: center; font-size: 0.85rem; }
+
+    /* Rules panel */
+    .rules-panel { margin: 16px; border-radius: 12px; overflow: hidden; background: var(--ref-card); }
+    .rules-toggle { width: 100%; padding: 16px 20px; background: var(--ref-card); color: var(--ref-text); border: none; cursor: pointer; font-size: 1rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+    .rules-toggle:hover { background: var(--ref-card-hover); }
+    .rules-body { padding: 4px 20px 20px; }
+    .rules-list { margin: 0; padding-left: 20px; color: var(--ref-text); }
+    .rules-list li { padding: 8px 0; border-bottom: 1px solid var(--ref-border); font-size: 0.9rem; line-height: 1.5; }
+    .rules-list li:last-child { border-bottom: none; }
+    .rules-list em { color: #e65100; font-style: normal; font-weight: 600; }
 
     /* Public court padel score */
     .court-padel-score { display: flex; justify-content: center; gap: 4px; align-items: baseline; }
@@ -232,23 +301,113 @@
     .court-golden-badge { display: inline-block; background: #ffd700; color: #333; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; }
 
     /* Header buttons row */
-    .header-btns { position: absolute; top: calc(10px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); display: flex; gap: 6px; }
-    .header-btns button { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.7); padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; white-space: nowrap; }
-    @media (max-width: 520px) {
-      .header-btns button { padding: 5px 10px; font-size: 0.75rem; }
+    .header-btns { display: flex; gap: 5px; flex-shrink: 0; }
+    .header-btns-mirror { visibility: hidden; pointer-events: none; }
+    .header-btns button { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.5); min-height: 34px; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600; white-space: nowrap; transition: background 0.15s; }
+    .header-btns button:hover { background: rgba(255,255,255,0.25); }
+    .header-btns .btn-label { display: inline; }
+    @media (max-width: 750px) { .header-btns .btn-label { display: none; } }
+
+    /* F1 — respect Reduce Motion (stops infinite pulse/flash for vestibular users) */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
     }
+
+    /* F2 — dark mode via manual toggle (default is light) */
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --green: #3e9a4f;
+      --green-light: #5bbf60;
+      --green-pale: #16241b;
+      --gray: #1e2a22;
+      --surface: #16211b;
+      --text: #e6e6e6;
+      --muted: #9aa6a0;
+      --border: #2e3d34;
+      --shadow: 0 2px 12px rgba(0,0,0,0.45);
+      /* Referee panel — dark theme */
+      --ref-bg: #1a1a2e;
+      --ref-text: #e6e6e6;
+      --ref-muted: #aaa;
+      --ref-card: #16213e;
+      --ref-card-hover: rgba(255,255,255,0.08);
+      --ref-border: rgba(255,255,255,0.15);
+      --ref-disabled: #555;
+    }
+    :root[data-theme="dark"] .info-box { color: var(--green-light); }
+    :root[data-theme="dark"] .admin-table tr:hover { background: rgba(255,255,255,0.04); }
+    :root[data-theme="dark"] .announcement-banner { background: #2a1f12; border-color: #6b4f2a; }
+    :root[data-theme="dark"] .announcement-banner .ann-item { border-bottom-color: #3a2c1a; color: var(--text); }
+    :root[data-theme="dark"] .tag-ny { background: #11314d; color: #7fb4e8; }
+    :root[data-theme="dark"] .tag-begynder { background: #3a2614; color: #f0a35a; }
+    :root[data-theme="dark"] .tag-øvet { background: #16301a; color: #6fc77a; }
+    :root[data-theme="dark"] #adminDashboard { background: #111a14 !important; }
+    :root[data-theme="dark"] #adminDashboard > header { background: #1f3327 !important; }
+    :root[data-theme="dark"] #adminDashboard main > div { background: var(--surface) !important; }
+    :root[data-theme="dark"] #adminLoginScreen { background: #111a14 !important; }
+    :root[data-theme="dark"] #adminLoginScreen > div { background: var(--surface) !important; color: var(--text) !important; }
+    :root[data-theme="dark"] #adminLoginScreen input { background: var(--gray) !important; color: var(--text) !important; border-color: var(--border) !important; }
+    :root[data-theme="dark"] #adminLoginScreen button:last-child { background: transparent !important; }
+    :root[data-theme="dark"] .admin-float-bar { background: #1f3327 !important; color: var(--text) !important; border-color: #2e3d34 !important; }
+    :root[data-theme="dark"] .match-row-default { background: var(--gray) !important; color: var(--text) !important; }
+    :root[data-theme="dark"] .match-row-active { background: #2d1a0a !important; }
+    :root[data-theme="dark"] .match-row-active,
+    :root[data-theme="dark"] .match-row-default { color: var(--text) !important; }
+    :root[data-theme="dark"] .score-input { background: var(--gray) !important; color: var(--text) !important; border-color: var(--green) !important; }
   </style>
+  <script>
+    // Theme toggle: default light, remembers choice. Set early to avoid flash.
+    (function() {
+      if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      function syncIcon() {
+        var b = document.getElementById('themeBtn');
+        if (b) b.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+      }
+      window.toggleTheme = function() {
+        if (document.documentElement.getAttribute('data-theme') === 'dark') {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.setItem('theme', 'light');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        }
+        syncIcon();
+      };
+      document.addEventListener('DOMContentLoaded', function() {
+        syncIcon();
+        var b = document.getElementById('themeBtn');
+        if (b) b.addEventListener('click', window.toggleTheme);
+      });
+    })();
+  </script>
 </head>
 <body>
 
 <!-- Public page header -->
 <header id="publicHeader">
-  <h1><span id="headerTitle">Paddeltennis Turnering</span></h1>
-  <p id="headerSubtitle">Lørdag kl. 12:00</p>
-  <span class="badge">Tilmeld dig herunder</span>
-  <div class="header-btns">
-    <button id="refereeBtn">🏁 Dommer</button>
-    <button id="adminBtn">🔒 Admin</button>
+  <div class="header-top">
+    <div class="header-btns header-btns-mirror" aria-hidden="true">
+      <button tabindex="-1">🌙</button>
+      <button tabindex="-1">🏁<span class="btn-label"> Dommer</span></button>
+      <button tabindex="-1">🔒<span class="btn-label"> Admin</span></button>
+    </div>
+    <div class="header-center">
+      <h1><span id="headerTitle">Padel Turnering</span></h1>
+      <p id="headerSubtitle">Lørdag kl. 12:00</p>
+    </div>
+    <div class="header-btns">
+      <button id="themeBtn" aria-label="Skift mellem lyst og mørkt tema" title="Lyst/mørkt tema">🌙</button>
+      <button id="refereeBtn">🏁<span class="btn-label"> Dommer</span></button>
+      <button id="adminBtn">🔒<span class="btn-label"> Admin</span></button>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <span class="badge">Tilmeld dig herunder</span>
   </div>
 </header>
 
@@ -275,11 +434,11 @@
         </div>
       </div>
       <div class="form-row" id="optionalFieldsRow">
-        <div class="field" id="emailField">
+        <div class="field" id="emailField" style="display:none">
           <label>Email (valgfrit)</label>
           <input type="email" id="email" placeholder="din@email.com" />
         </div>
-        <div class="field" id="telefonField">
+        <div class="field" id="telefonField" style="display:none">
           <label>Telefon (valgfrit)</label>
           <input type="tel" id="telefon" placeholder="+45 12 34 56 78" />
         </div>
@@ -306,7 +465,7 @@
       <span>Tilmeldte</span>
       <strong id="countDisplay">0 deltagere</strong>
     </div>
-    <div class="tabs">
+    <div class="tabs public-tabs" tabindex="-1">
       <button class="tab active" onclick="switchTab('liste',this)">Deltagere</button>
       <button class="tab" onclick="switchTab('hold',this)">Hold</button>
       <button class="tab" onclick="switchTab('baner',this)">Baner</button>
@@ -375,14 +534,14 @@
 </div>
 
 <!-- Admin Login Screen -->
-<div id="adminLoginScreen" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--green-pale);z-index:10000;overflow:auto;">
-  <div style="max-width:400px;margin:60px auto;background:white;border-radius:12px;padding:40px;box-shadow:0 10px 40px rgba(0,0,0,0.1);">
+<div id="adminLoginScreen" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--green-pale);z-index:10000;overflow:auto;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);">
+  <div style="max-width:400px;margin:40px auto 40px;background:var(--surface);border-radius:12px;padding:32px 24px;box-shadow:0 10px 40px rgba(0,0,0,0.1);">
     <h1 style="font-size:2rem;margin-bottom:10px;color:var(--green);">Admin</h1>
     <p style="color:var(--muted);margin-bottom:30px;">Log ind med din admin-konto</p>
-    <input type="email" id="adminLoginEmail" placeholder="Email" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:1rem;" />
-    <input type="password" id="adminLoginPassword" placeholder="Adgangskode" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:16px;font-size:1rem;" />
-    <button id="adminLoginBtn" style="width:100%;padding:13px;background:var(--green);color:white;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Log ind</button>
-    <button onclick="document.getElementById('adminLoginScreen').style.display='none'" style="width:100%;padding:13px;background:white;color:var(--green);border:2px solid var(--green);border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:10px;">Tilbage</button>
+    <input type="email" id="adminLoginEmail" placeholder="Email" autocomplete="email" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:12px;font-size:1rem;background:var(--gray);color:var(--text);" />
+    <input type="password" id="adminLoginPassword" placeholder="Adgangskode" autocomplete="current-password" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;margin-bottom:16px;font-size:1rem;background:var(--gray);color:var(--text);" />
+    <button id="adminLoginBtn" style="width:100%;min-height:48px;padding:13px;background:var(--green);color:white;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">Log ind</button>
+    <button onclick="document.getElementById('adminLoginScreen').style.display='none'" style="width:100%;min-height:48px;padding:13px;background:transparent;color:var(--green);border:2px solid var(--green);border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:10px;">Tilbage</button>
   </div>
 </div>
 
@@ -417,16 +576,16 @@
 
 <!-- Admin Dashboard (overlay) -->
 <div id="adminDashboard" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#f5f5f5;z-index:10000;overflow:auto;">
-  <header style="background:var(--green);color:white;padding:20px;display:flex;justify-content:space-between;align-items:center;">
-    <h1 style="font-size:1.5rem;">Admin Panel</h1>
-    <div style="display:flex;gap:8px;">
-      <button onclick="showPublicPage()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">Vis forside</button>
-      <button onclick="logoutAdmin()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">Log ud</button>
+  <header style="background:var(--green);color:white;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px + env(safe-area-inset-left));padding-right:calc(16px + env(safe-area-inset-right));display:flex;justify-content:space-between;align-items:center;gap:8px;">
+    <h1 style="font-size:1.1rem;white-space:nowrap;min-width:0;flex:1;">Admin Panel</h1>
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <button onclick="showPublicPage()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.7);min-height:40px;padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.8rem;white-space:nowrap;">← Forside</button>
+      <button onclick="logoutAdmin()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.7);min-height:40px;padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.8rem;white-space:nowrap;">Log ud</button>
     </div>
   </header>
-  <main style="max-width:1000px;margin:0 auto;padding:24px 16px;">
-    <div style="background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:24px;">
-      <div class="tabs" style="margin:0;border-radius:0;flex-wrap:wrap;">
+  <main style="max-width:1000px;margin:0 auto;padding:16px 12px;">
+    <div style="background:var(--surface);border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin-bottom:24px;">
+      <div class="tabs admin-tabs" tabindex="-1" style="margin:0;border-radius:0;">
         <button class="tab active" onclick="switchAdminTab('indstillinger',this)" style="border-radius:0;">Indstillinger</button>
         <button class="tab" onclick="switchAdminTab('deltagere',this)" style="border-radius:0;">Deltagere</button>
         <button class="tab" onclick="switchAdminTab('hold',this)" style="border-radius:0;">Hold</button>
@@ -436,17 +595,19 @@
         <button class="tab" onclick="switchAdminTab('eksport',this)" style="border-radius:0;">Eksport</button>
       </div>
 
-      <div id="tab-indstillinger" class="tab-content active" style="padding:24px;">
+      <div id="tab-indstillinger" class="tab-content active" style="padding:20px 16px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Turneringsindstillinger</h2>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-          <div class="field"><label>Turneringsnavn</label><input type="text" id="tournamentName" value="Paddeltennis Turnering" /></div>
+        <div class="admin-form-grid">
+          <div class="field"><label>Turneringsnavn</label><input type="text" id="tournamentName" value="Padel Turnering" /></div>
           <div class="field"><label>Dato & Tidspunkt</label><input type="text" id="tournamentDateTime" value="Lørdag kl. 12:00" /></div>
           <div class="field"><label>Placering</label><input type="text" id="tournamentLocation" placeholder="Fx. Lalandia" /></div>
           <div class="field"><label>Max. deltagere</label><input type="number" id="maxParticipants" placeholder="Fx. 32" /></div>
           <div class="field"><label>Antal baner</label><input type="number" id="courtCount" value="4" min="1" max="20" /></div>
           <div class="field"><label>Format</label>
             <select id="tournamentFormat">
-              <option value="knockout" selected>Knockout (eliminering)</option>
+              <option value="knockout">Knockout (eliminering)</option>
+              <option value="seeded">Seeded Kvalifikation</option>
+              <option value="roundrobin">Alle mod alle</option>
               <option value="americano">Americano (Round-robin)</option>
             </select>
           </div>
@@ -454,35 +615,67 @@
         </div>
         <div style="margin-top:24px;">
           <h3 style="color:var(--green);font-size:1rem;margin-bottom:12px;">Banenavne</h3>
-          <div id="courtNamesContainer" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+          <div id="courtNamesContainer" class="admin-form-grid"></div>
         </div>
         <div style="margin-top:24px;">
           <h3 style="color:var(--green);font-size:1rem;margin-bottom:12px;">Tilmeldingsfelter</h3>
           <p style="font-size:0.82rem;color:var(--muted);margin-bottom:10px;">Vælg hvilke felter der vises i tilmeldingsformularen</p>
-          <div class="checkbox-row"><input type="checkbox" id="showEmail" checked /><label for="showEmail">Email</label></div>
-          <div class="checkbox-row"><input type="checkbox" id="showTelefon" checked /><label for="showTelefon">Telefon</label></div>
+          <div class="checkbox-row-compact"><input type="checkbox" id="showEmail" /><label for="showEmail">Email</label></div>
+          <div class="checkbox-row-compact"><input type="checkbox" id="showTelefon" /><label for="showTelefon">Telefon</label></div>
         </div>
         <button class="btn" onclick="saveTournamentSettings()" style="max-width:200px;margin-top:20px;">Gem indstillinger</button>
       </div>
 
-      <div id="tab-deltagere" class="tab-content" style="padding:24px;">
+      <div id="tab-deltagere" class="tab-content" style="padding:20px 16px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Deltager Management</h2>
-        <div style="margin-bottom:20px;display:flex;gap:10px;">
-          <button class="btn btn-secondary" onclick="openAddParticipantModal()" style="flex:1;">+ Tilføj deltager</button>
-          <button class="btn btn-secondary" onclick="openBulkImportModal()" style="flex:1;">Masseimport CSV</button>
+        <div style="margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="openAddParticipantModal()" style="flex:1;min-width:140px;">+ Tilføj deltager</button>
+          <button class="btn btn-secondary" onclick="openBulkImportModal()" style="flex:1;min-width:140px;">Masseimport CSV</button>
         </div>
-        <table class="admin-table" id="participantTable">
-          <thead id="participantTableHead"><tr><th>Navn</th><th>Niveau</th><th>Ønsket makker</th><th>Aktuelt</th></tr></thead>
-          <tbody id="participantTableBody"><tr><td colspan="4" style="text-align:center;color:var(--muted);">Ingen deltagere</td></tr></tbody>
-        </table>
+        <div class="table-scroll">
+          <table class="admin-table" id="participantTable">
+            <thead id="participantTableHead"><tr><th>Navn</th><th>Niveau</th><th>Ønsket makker</th><th>Aktuelt</th></tr></thead>
+            <tbody id="participantTableBody"><tr><td colspan="4" style="text-align:center;color:var(--muted);">Ingen deltagere</td></tr></tbody>
+          </table>
+        </div>
       </div>
 
-      <div id="admin-tab-hold" class="tab-content" style="padding:24px;">
+      <div id="admin-tab-hold" class="tab-content" style="padding:20px 16px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Hold</h2>
         <div class="info-box">Træk deltagere mellem hold for at tilpasse.</div>
-        <div style="display:flex;gap:10px;margin-bottom:12px;">
-          <button class="btn" onclick="generateTeamsBalanced()" style="flex:1;">Generer hold (Niveau-baseret)</button>
-          <button class="btn btn-secondary" onclick="clearTeams()" style="flex:1;">Nulstil</button>
+        <div style="background:var(--gray);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px;">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Kriterier for holdgenerering</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div class="crit-row">
+              <div class="checkbox-row-compact"><input type="checkbox" id="genNiveau" checked /><label for="genNiveau">🎯 Niveau</label></div>
+              <div class="crit-modes" id="modesNiveau">
+                <label class="mode-opt"><input type="radio" name="niveauMode" value="mix" checked /><span>Blandet</span></label>
+                <label class="mode-opt"><input type="radio" name="niveauMode" value="match" /><span>Samme niveau</span></label>
+              </div>
+            </div>
+            <div class="crit-row">
+              <div class="checkbox-row-compact"><input type="checkbox" id="genMakker" checked /><label for="genMakker">🤝 Ønsket makker</label></div>
+            </div>
+            <div class="crit-row">
+              <div class="checkbox-row-compact"><input type="checkbox" id="genAlder" /><label for="genAlder">🎂 Alder</label></div>
+              <div class="crit-modes" id="modesAlder" style="display:none;">
+                <label class="mode-opt"><input type="radio" name="alderMode" value="mix" checked /><span>Blandet</span></label>
+                <label class="mode-opt"><input type="radio" name="alderMode" value="close" /><span>Tæt på</span></label>
+              </div>
+            </div>
+            <div class="crit-row">
+              <div class="checkbox-row-compact"><input type="checkbox" id="genEfternavn" /><label for="genEfternavn">👨‍👩‍👧 Efternavn</label></div>
+              <div class="crit-modes" id="modesEfternavn" style="display:none;">
+                <label class="mode-opt"><input type="radio" name="efternavnMode" value="avoid" checked /><span>Undgå samme</span></label>
+                <label class="mode-opt"><input type="radio" name="efternavnMode" value="prefer" /><span>Foretræk samme</span></label>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:6px;"><span id="genHint">Bland niveau for mest fair parring + makker-ønsker.</span></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+          <button class="btn" onclick="generateTeamsBalanced()" style="flex:1;min-width:140px;">Generer hold</button>
+          <button class="btn btn-secondary" onclick="clearTeams()" style="flex:1;min-width:100px;">Nulstil</button>
         </div>
         <div class="checkbox-row" style="margin-bottom:16px;">
           <input type="checkbox" id="teamsVisible" />
@@ -491,32 +684,34 @@
         <div id="adminTeamsList" style="margin-top:10px;"></div>
       </div>
 
-      <div id="admin-tab-kampe" class="tab-content" style="padding:24px;">
+      <div id="admin-tab-kampe" class="tab-content" style="padding:20px 16px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Kampplan & Baner</h2>
         <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-          <button class="btn" onclick="generateBracket()" style="flex:1;min-width:150px;">Knockout</button>
-          <button class="btn" onclick="generateSeededQual()" style="flex:1;min-width:150px;background:#e65100;">Seeded Kvalifikation</button>
-          <button class="btn" onclick="generateRoundRobin()" style="flex:1;min-width:150px;background:#1565c0;">Alle mod alle</button>
+          <button class="btn" onclick="generateBracket()" style="flex:1;min-width:120px;">Knockout</button>
+          <button class="btn" onclick="generateSeededQual()" style="flex:1;min-width:120px;background:#e65100;">Seeded Kval.</button>
+          <button class="btn" onclick="generateRoundRobin()" style="flex:1;min-width:120px;background:#1565c0;">Alle mod alle</button>
         </div>
         <div id="adminFilterPills" class="filter-pills"></div>
         <div id="adminMatchesList" style="margin-top:10px;"></div>
       </div>
 
-      <div id="tab-rangliste" class="tab-content" style="padding:24px;">
+      <div id="tab-rangliste" class="tab-content" style="padding:20px 16px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Live Rangliste</h2>
         <div class="info-box">Ranglisten opdateres automatisk når kampresultater tilføjes.</div>
-        <table class="admin-table" style="font-size:0.9rem;">
-          <thead><tr>
-            <th style="width:50px;">Plads</th><th>Hold</th><th style="width:70px;">Point</th>
-            <th style="width:60px;">Sejre</th><th style="width:60px;">Ned.</th><th style="width:100px;">Sejr%</th>
-          </tr></thead>
-          <tbody id="leaderboardBody">
-            <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater endnu</td></tr>
-          </tbody>
-        </table>
+        <div class="table-scroll">
+          <table class="admin-table" style="font-size:0.9rem;">
+            <thead><tr>
+              <th style="width:50px;">Plads</th><th>Hold</th><th style="width:70px;">Point</th>
+              <th style="width:60px;">Sejre</th><th style="width:60px;">Ned.</th><th style="width:100px;">Sejr%</th>
+            </tr></thead>
+            <tbody id="leaderboardBody">
+              <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Ingen resultater endnu</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div id="tab-beskeder" class="tab-content" style="padding:24px;">
+      <div id="tab-beskeder" class="tab-content" style="padding:20px 16px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Opslagstavle</h2>
         <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">Beskeder vises på forsiden for alle deltagere i realtid.</p>
         <div class="field">
@@ -530,9 +725,9 @@
         </div>
       </div>
 
-      <div id="tab-eksport" class="tab-content" style="padding:24px;">
+      <div id="tab-eksport" class="tab-content" style="padding:20px 16px;">
         <h2 style="color:var(--green);margin-bottom:20px;font-size:1.2rem;">Eksport</h2>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="display:flex;flex-direction:column;gap:12px;">
           <button class="btn" onclick="exportCSV()">Deltagere (CSV)</button>
           <button class="btn" onclick="exportTeamsCSV()">Hold (CSV)</button>
           <button class="btn" onclick="exportScheduleCSV()">Kampplan (CSV)</button>
@@ -797,7 +992,7 @@
       const snap = await get(ref(db, 'tournaments/default'));
       if (snap.exists()) { tournament = snap.val(); }
       else {
-        tournament = { name: 'Paddeltennis Turnering', dateTime: 'Lørdag kl. 12:00', location: '', maxParticipants: null, courtCount: 4, format: 'knockout', courtNames: {}, showEmail: false, showTelefon: false, defaultMatchTime: 20 };
+        tournament = { name: 'Padel Turnering', dateTime: 'Lørdag kl. 12:00', location: '', maxParticipants: null, courtCount: 4, format: 'knockout', courtNames: {}, showEmail: false, showTelefon: false, defaultMatchTime: 20 };
         await set(ref(db, 'tournaments/default'), tournament);
       }
       applyTournamentSettings();
@@ -805,7 +1000,7 @@
   }
 
   function applyTournamentSettings() {
-    document.getElementById('headerTitle').textContent = tournament.name || 'Paddeltennis Turnering';
+    document.getElementById('headerTitle').textContent = tournament.name || 'Padel Turnering';
     document.getElementById('headerSubtitle').textContent = tournament.dateTime || '';
     const emailField = document.getElementById('emailField');
     const telefonField = document.getElementById('telefonField');
@@ -905,9 +1100,11 @@
         return;
       }
       window.isAdmin = true;
+      isReferee = true;
       document.getElementById('adminLoginScreen').style.display = 'none';
       document.getElementById('refereeLoginScreen').style.display = 'none';
       document.getElementById('adminFloatBar').style.display = 'flex';
+      showRefCourtSelector();
       showToast('Logget ind (' + user.email + ')');
     } else {
       window.isAdmin = false; isReferee = false;
@@ -1098,7 +1295,27 @@
         </div>
         ${nextHTML}
       </div>`;
-    }).join('');
+    }).join('') + `
+    <div class="rules-panel" id="rulesPanel">
+      <button class="rules-toggle" onclick="toggleRules()">
+        <span>📋 Regler</span>
+        <span id="rulesArrow">▼</span>
+      </button>
+      <div class="rules-body" id="rulesBody" style="display:none;">
+        <ol class="rules-list">
+          <li>Bolden skal serve diagonalt og ramme modstanderens servicefelt — serven skal sprette i feltet <em>inden</em> den eventuelt rammer glasvæg eller sidegitter.</li>
+          <li>Bolden må spille én gang på gulvet og derefter på vægge/gitter. Spilles bolden direkte mod modstanderens glasvæg (uden at ramme gulvet) er det en fejl.</li>
+          <li>Bolden må ikke spille på det eget holds side mere end én gang — undtagen ved serv.</li>
+          <li>Et point tabes, hvis bolden spiller to gange på gulvet på holdets side, rammer net, spilles ud af banen, eller rammer spiller/tøj.</li>
+          <li>Serv skal udføres nedefra, bolden slippes og rammes under hoftehøjde. Begge fødder bag bundlinjen ved serv.</li>
+          <li>Servanten har to serveforsøg. Dobbeltfejl giver modstanderne point.</li>
+          <li>Bolden ud af banen via en åbning tæller som out, medmindre banen er lukket. Bolden kan hentes og spilles tilbage, hvis der er passage.</li>
+          <li>Point tælles: 0, 15, 30, 40, Deuce, Ad-ind/Ad-ud. Ved Deuce kræves to point i træk for at vinde spillet.</li>
+          <li>Et sæt vindes ved 6 spil med mindst 2 spils forskel. Ved 6-6 spilles tiebreak til 7 point (med mindst 2 points forskel).</li>
+          <li>En kamp vindes normalt bedst af 3 sæt — medmindre turneringen bruger andre regler.</li>
+        </ol>
+      </div>
+    </div>`;
 
     // Start timer display intervals
     activeMatches.forEach(m => {
@@ -1114,6 +1331,14 @@
       }
     });
   }
+
+  window.toggleRules = () => {
+    const body = document.getElementById('rulesBody');
+    const arrow = document.getElementById('rulesArrow');
+    const open = body.style.display === 'none';
+    body.style.display = open ? 'block' : 'none';
+    arrow.textContent = open ? '▲' : '▼';
+  };
 
   window.backToCourtSelector = () => { document.getElementById('refScorekeeper').style.display = 'none'; document.getElementById('refCourtSelector').style.display = 'block'; document.getElementById('refBackBtn').style.display = 'none'; showRefCourtSelector(); };
 
@@ -1417,17 +1642,146 @@
   // ═══════════════════════════════════════════════════════════════════
   function shuffle(a) { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; }
 
+  // Show/hide mode selectors and update hint as checkboxes change
+  function syncCritModes() {
+    const n = document.getElementById('genNiveau')?.checked;
+    const a = document.getElementById('genAlder')?.checked;
+    const e = document.getElementById('genEfternavn')?.checked;
+    const mn = document.getElementById('modesNiveau');
+    const ma = document.getElementById('modesAlder');
+    const me = document.getElementById('modesEfternavn');
+    if (mn) mn.style.display = n ? 'flex' : 'none';
+    if (ma) ma.style.display = a ? 'flex' : 'none';
+    if (me) me.style.display = e ? 'flex' : 'none';
+    updateGenHint();
+  }
+  ['genNiveau','genMakker','genAlder','genEfternavn'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', syncCritModes);
+  });
+  document.querySelectorAll('input[name="niveauMode"],input[name="alderMode"],input[name="efternavnMode"]').forEach(r => r.addEventListener('change', updateGenHint));
+  function updateGenHint() {
+    const n = document.getElementById('genNiveau')?.checked;
+    const m = document.getElementById('genMakker')?.checked;
+    const a = document.getElementById('genAlder')?.checked;
+    const e = document.getElementById('genEfternavn')?.checked;
+    const nMode = document.querySelector('input[name="niveauMode"]:checked')?.value ?? 'mix';
+    const aMode = document.querySelector('input[name="alderMode"]:checked')?.value ?? 'mix';
+    const eMode = document.querySelector('input[name="efternavnMode"]:checked')?.value ?? 'avoid';
+    const parts = [];
+    if (m) parts.push('makker-ønsker');
+    if (n) parts.push(nMode === 'mix' ? 'niveau (mest fair)' : 'niveau (samme niveau)');
+    if (a) parts.push(aMode === 'close' ? 'alder (tæt på)' : 'alder (blandet)');
+    if (e) parts.push(eMode === 'prefer' ? 'foretræk samme efternavn' : 'undgår samme efternavn');
+    const el = document.getElementById('genHint');
+    if (el) el.textContent = parts.length ? 'Parring: ' + parts.join(', ') + '.' : 'Ingen kriterier valgt — tilfældig parring.';
+  }
+  syncCritModes();
+
   window.generateTeamsBalanced = () => {
     if (participants.length < 2) return showToast('Mindst 2 deltagere');
+    const useNiveau    = document.getElementById('genNiveau')?.checked ?? true;
+    const useMakker    = document.getElementById('genMakker')?.checked ?? true;
+    const useAlder     = document.getElementById('genAlder')?.checked ?? false;
+    const useEfternavn = document.getElementById('genEfternavn')?.checked ?? false;
+    const niveauMode   = document.querySelector('input[name="niveauMode"]:checked')?.value ?? 'mix';
+    const alderMode    = document.querySelector('input[name="alderMode"]:checked')?.value ?? 'mix';
+    const efternavnMode= document.querySelector('input[name="efternavnMode"]:checked')?.value ?? 'avoid';
+
     let assigned = new Set(), teams = [];
     const pool = [...participants];
-    pool.forEach(p => { if (assigned.has(p.navn)) return; const wish = p.makker ? pool.find(q => q.navn.toLowerCase().trim() === p.makker.toLowerCase().trim() && !assigned.has(q.navn) && q._key !== p._key) : null; if (wish) { teams.push([p,wish]); assigned.add(p.navn); assigned.add(wish.navn); } });
-    const unassigned = pool.filter(p => !assigned.has(p.navn));
-    const byLevel = {}; ['Ny','Begynder','Ovet','Øvet'].forEach(l => { byLevel[l] = shuffle(unassigned.filter(p => p.niveau === l)); });
-    byLevel['Ovet'] = [...(byLevel['Ovet']||[]), ...(byLevel['Øvet']||[])]; delete byLevel['Øvet'];
-    Object.values(byLevel).forEach(tier => { for (let i=0;i<tier.length;i+=2) { if (i+1<tier.length) { teams.push([tier[i],tier[i+1]]); assigned.add(tier[i].navn); assigned.add(tier[i+1].navn); } } });
-    unassigned.forEach(p => { if (!assigned.has(p.navn)) { const inc = teams.find(t => t.length === 1); if (inc) inc.push(p); else teams.push([p]); assigned.add(p.navn); } });
-    currentTeams = teams; allMatches = []; saveBracketDataNow(); renderAdminTeams(); showToast(teams.length + ' hold genereret!');
+    const lastName = n => (n || '').trim().split(' ').slice(-1)[0].toLowerCase();
+
+    // 1. Honor partner wishes
+    if (useMakker) {
+      pool.forEach(p => {
+        if (assigned.has(p.navn)) return;
+        const wish = p.makker ? pool.find(q => q.navn.toLowerCase().trim() === p.makker.toLowerCase().trim() && !assigned.has(q.navn) && q._key !== p._key) : null;
+        if (wish) { teams.push([p, wish]); assigned.add(p.navn); assigned.add(wish.navn); }
+      });
+    }
+
+    let unassigned = pool.filter(p => !assigned.has(p.navn));
+
+    // 2. Pair by niveau strategy
+    if (useNiveau) {
+      if (niveauMode === 'match') {
+        // Same level: group by tier, pair within tier
+        const byLevel = {};
+        unassigned.forEach(p => { const l = (p.niveau === 'Ovet' ? 'Øvet' : p.niveau) || 'Ny'; (byLevel[l] = byLevel[l]||[]).push(p); });
+        ['Ny','Begynder','Øvet'].forEach(tier => {
+          const list = byLevel[tier] || [];
+          if (useAlder && alderMode === 'close') list.sort((a,b) => (parseInt(a.alder)||0) - (parseInt(b.alder)||0));
+          else if (useAlder && alderMode === 'mix') { list.sort((a,b) => (parseInt(a.alder)||0) - (parseInt(b.alder)||0)); for(let i=0;i<Math.floor(list.length/2);i++){const j=list.length-1-i;if(i<j)[list[i],list[j]]=[list[j],list[i]];} }
+          for (let i = 0; i < list.length - 1; i += 2) { teams.push([list[i],list[i+1]]); assigned.add(list[i].navn); assigned.add(list[i+1].navn); }
+        });
+      } else {
+        // Most fair (mix): snake-draft — sort by level desc, pair highest with lowest
+        unassigned.sort((a,b) => (levelScores[b.niveau]||1) - (levelScores[a.niveau]||1));
+        if (useAlder && alderMode === 'close') {
+          // Within similar-level pairs, prefer close ages — interleave age sort
+          unassigned.sort((a,b) => { const ds = (levelScores[b.niveau]||1)-(levelScores[a.niveau]||1); return ds !== 0 ? ds : (parseInt(a.alder)||0)-(parseInt(b.alder)||0); });
+        }
+        const n = unassigned.length;
+        const paired = new Set();
+        for (let i = 0; i < Math.floor(n/2); i++) {
+          const hi = unassigned[i], lo = unassigned[n-1-i];
+          if (hi && lo && hi !== lo && !paired.has(i) && !paired.has(n-1-i)) {
+            teams.push([hi,lo]); assigned.add(hi.navn); assigned.add(lo.navn); paired.add(i); paired.add(n-1-i);
+          }
+        }
+      }
+    } else {
+      // No niveau — sort by age if needed, then pair adjacent
+      if (useAlder) {
+        if (alderMode === 'close') unassigned.sort((a,b) => (parseInt(a.alder)||0)-(parseInt(b.alder)||0));
+        else { unassigned.sort((a,b) => (parseInt(a.alder)||0)-(parseInt(b.alder)||0)); for(let i=0;i<Math.floor(unassigned.length/2);i++){const j=unassigned.length-1-i;if(i<j)[unassigned[i],unassigned[j]]=[unassigned[j],unassigned[i]];} }
+      } else {
+        unassigned = shuffle(unassigned);
+      }
+      for (let i = 0; i < unassigned.length - 1; i += 2) {
+        if (!assigned.has(unassigned[i].navn) && !assigned.has(unassigned[i+1].navn)) {
+          teams.push([unassigned[i],unassigned[i+1]]); assigned.add(unassigned[i].navn); assigned.add(unassigned[i+1].navn);
+        }
+      }
+    }
+
+    // 3. Handle leftovers
+    pool.filter(p => !assigned.has(p.navn)).forEach(p => {
+      const inc = teams.find(t => t.length === 1);
+      if (inc) inc.push(p); else teams.push([p]);
+      assigned.add(p.navn);
+    });
+
+    // 4. Efternavn post-processing
+    if (useEfternavn) {
+      for (let i = 0; i < teams.length; i++) {
+        const t = teams[i];
+        if (t.length < 2) continue;
+        const sameNow = lastName(t[0].navn) === lastName(t[1].navn);
+        if (efternavnMode === 'avoid' && sameNow) {
+          // Swap t[1] with someone from another team who has a different last name
+          let swapped = false;
+          for (let j = i+1; j < teams.length && !swapped; j++) {
+            for (let slot = 0; slot < teams[j].length && !swapped; slot++) {
+              const c = teams[j][slot];
+              if (lastName(c.navn) !== lastName(t[0].navn)) { teams[j][slot]=t[1]; t[1]=c; swapped=true; }
+            }
+          }
+        } else if (efternavnMode === 'prefer' && !sameNow) {
+          // Try to swap t[1] with someone from another team who has the same last name as t[0]
+          let swapped = false;
+          for (let j = i+1; j < teams.length && !swapped; j++) {
+            for (let slot = 0; slot < teams[j].length && !swapped; slot++) {
+              const c = teams[j][slot];
+              if (lastName(c.navn) === lastName(t[0].navn)) { teams[j][slot]=t[1]; t[1]=c; swapped=true; }
+            }
+          }
+        }
+      }
+    }
+
+    currentTeams = teams; allMatches = []; saveBracketDataNow(); renderAdminTeams();
+    showToast(teams.length + ' hold genereret!');
   };
 
   window.clearTeams = () => { if (!confirm('Nulstil alt?')) return; currentTeams = []; allMatches = []; qualRounds = 0; confettiFired = false; saveBracketDataNow(); renderAdminTeams(); renderAdminMatches(); updateLeaderboard(); showToast('Nulstillet'); };
@@ -1582,14 +1936,48 @@
         let act = '';
         if (match.status === 'completed') {
           const sd = sc ? `${sc.gamesA}-${sc.gamesB}` : `${match.scoreA||0}-${match.scoreB||0}`;
-          act = `<strong>${sd}</strong> <button onclick="editMatchScore(${match.id})" class="btn btn-small btn-secondary" style="font-size:0.72rem;padding:4px 8px;">Rediger</button>`;
+          const [curA, curB] = sd.split('-');
+          act = `<span id="score-display-${match.id}"><strong>${sd}</strong> <button onclick="openInlineEdit(${match.id})" class="btn btn-small btn-secondary" style="font-size:0.72rem;padding:4px 8px;">Rediger</button></span>
+<span id="score-edit-${match.id}" style="display:none;align-items:center;gap:6px;">
+  <input id="scoreA-${match.id}" type="number" min="0" value="${curA}" class="score-input" style="width:44px;padding:5px;border:1.5px solid var(--green);border-radius:6px;font-size:1rem;font-weight:700;text-align:center;">
+  <span style="font-weight:700;">–</span>
+  <input id="scoreB-${match.id}" type="number" min="0" value="${curB}" class="score-input" style="width:44px;padding:5px;border:1.5px solid var(--green);border-radius:6px;font-size:1rem;font-weight:700;text-align:center;">
+  <button onclick="saveInlineEdit(${match.id})" class="btn btn-small" style="padding:5px 10px;">Færdig</button>
+  <button onclick="cancelInlineEdit(${match.id})" class="btn btn-small btn-secondary" style="padding:5px 8px;">✕</button>
+</span>`;
         } else if (match.status === 'in-progress') {
           const g = sc ? `${sc.gamesA}-${sc.gamesB}` : '0-0'; const p2 = sc ? `${sc.ptsA}-${sc.ptsB}` : '0-0';
-          act = `<span style="font-weight:900;">${g}</span> <span style="color:var(--muted);font-size:0.8rem;">(${p2})</span> ${sc&&sc.advLabel?`<span class="court-golden-badge">${sc.advLabel}</span>`:''} <button onclick="adminFinishMatch(${match.id})" class="btn btn-small" style="background:#e53935;">Afslut</button>`;
-        } else if (match.status === 'scheduled') { act = `<button onclick="adminStartMatch(${match.id})" class="btn btn-small">Start</button>`; }
+          const [curA, curB] = g.split('-');
+          act = `<span id="score-display-${match.id}" style="display:flex;align-items:center;gap:6px;">
+            <span style="font-weight:900;">${g}</span>
+            <span style="color:var(--muted);font-size:0.8rem;">(${p2})</span>
+            ${sc&&sc.advLabel?`<span class="court-golden-badge">${sc.advLabel}</span>`:''}
+            <button onclick="openInlineEdit(${match.id})" class="btn btn-small btn-secondary" style="font-size:0.72rem;padding:4px 8px;">Rediger</button>
+            <button onclick="adminFinishMatch(${match.id})" class="btn btn-small" style="background:#e53935;">Afslut</button>
+          </span>
+          <span id="score-edit-${match.id}" style="display:none;align-items:center;gap:6px;">
+            <input id="scoreA-${match.id}" type="number" min="0" value="${curA}" class="score-input" style="width:44px;padding:5px;border:1.5px solid var(--green);border-radius:6px;font-size:1rem;font-weight:700;text-align:center;">
+            <span style="font-weight:700;">–</span>
+            <input id="scoreB-${match.id}" type="number" min="0" value="${curB}" class="score-input" style="width:44px;padding:5px;border:1.5px solid var(--green);border-radius:6px;font-size:1rem;font-weight:700;text-align:center;">
+            <button onclick="saveInlineEdit(${match.id})" class="btn btn-small" style="padding:5px 10px;">Færdig</button>
+            <button onclick="cancelInlineEdit(${match.id})" class="btn btn-small btn-secondary" style="padding:5px 8px;">✕</button>
+          </span>`;
+        } else if (match.status === 'scheduled') {
+          act = `<span id="score-display-${match.id}">
+            <button onclick="adminStartMatch(${match.id})" class="btn btn-small">Start</button>
+            <button onclick="openInlineEdit(${match.id})" class="btn btn-small btn-secondary" style="font-size:0.72rem;padding:4px 8px;">Rediger</button>
+          </span>
+          <span id="score-edit-${match.id}" style="display:none;align-items:center;gap:6px;">
+            <input id="scoreA-${match.id}" type="number" min="0" value="0" class="score-input" style="width:44px;padding:5px;border:1.5px solid var(--green);border-radius:6px;font-size:1rem;font-weight:700;text-align:center;">
+            <span style="font-weight:700;">–</span>
+            <input id="scoreB-${match.id}" type="number" min="0" value="0" class="score-input" style="width:44px;padding:5px;border:1.5px solid var(--green);border-radius:6px;font-size:1rem;font-weight:700;text-align:center;">
+            <button onclick="saveInlineEdit(${match.id})" class="btn btn-small" style="padding:5px 10px;">Færdig</button>
+            <button onclick="cancelInlineEdit(${match.id})" class="btn btn-small btn-secondary" style="padding:5px 8px;">✕</button>
+          </span>`;
+        }
         else act = '<span style="color:var(--muted);">Afventer</span>';
         const icon = match.status==='completed'?'✅':match.status==='in-progress'?'🔴':match.status==='waiting'?'⏳':'📋';
-        html += `<div style="padding:12px;border:1.5px solid ${match.status==='in-progress'?'#e65100':match.status==='completed'?'var(--green-light)':'var(--border)'};border-radius:8px;background:${match.status==='in-progress'?'#fff8f0':'var(--gray)'};display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        html += `<div class="${match.status==='in-progress'?'match-row-active':'match-row-default'}" style="padding:12px;border:1.5px solid ${match.status==='in-progress'?'#e65100':match.status==='completed'?'var(--green-light)':'var(--border)'};border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
           <div style="display:flex;align-items:center;gap:8px;flex:1;">${icon} <div><div style="font-weight:700;font-size:0.85rem;"><span class="bane-tag">${getCourtName(match.court)}</span> Hold ${(match.teamA??-1)+1} vs Hold ${(match.teamB??-1)+1}</div><div style="font-size:0.78rem;color:var(--muted);">${tAn} mod ${tBn}</div></div></div>
           <div style="display:flex;align-items:center;gap:8px;">${act}</div>
         </div>`;
@@ -1658,12 +2046,32 @@
     }
   }
 
-  window.editMatchScore = (matchId) => {
+  window.openInlineEdit = (matchId) => {
+    document.getElementById('score-display-' + matchId).style.display = 'none';
+    const el = document.getElementById('score-edit-' + matchId);
+    el.style.display = 'flex';
+    document.getElementById('scoreA-' + matchId).focus();
+  };
+
+  window.cancelInlineEdit = (matchId) => {
+    document.getElementById('score-display-' + matchId).style.display = '';
+    document.getElementById('score-edit-' + matchId).style.display = 'none';
+  };
+
+  window.saveInlineEdit = (matchId) => {
     const m = findMatch(matchId); if (!m) return;
-    m.status = 'in-progress'; m.winner = null;
-    if (!m.padelScore) m.padelScore = defaultPadelScore();
+    const sA = parseInt(document.getElementById('scoreA-' + matchId).value);
+    const sB = parseInt(document.getElementById('scoreB-' + matchId).value);
+    if (isNaN(sA) || isNaN(sB)) return showToast('Ugyldigt resultat');
+    if (sA === sB) return showToast('Uafgjort ikke tilladt');
+    m.padelScore = null;
     cascadeClearDownstream(m);
-    saveBracketDataNow(); renderAdminMatches(); updateLeaderboard(); showToast('Redigér resultatet');
+    m.status = 'completed'; m.scoreA = sA; m.scoreB = sB;
+    m.winner = sA > sB ? m.teamA : m.teamB;
+    if (m.timer) m.timer.running = false;
+    if (timerIntervals[m.id]) { clearInterval(timerIntervals[m.id]); delete timerIntervals[m.id]; }
+    advanceWinners();
+    saveBracketDataNow(); renderAdminMatches(); updateLeaderboard(); showToast('Resultat opdateret');
   };
 
   // ═══════════════════════════════════════════════════════════════════
