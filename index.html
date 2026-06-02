@@ -884,7 +884,13 @@
 
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      if (user.email && user.email.toLowerCase().includes('dommer')) return; // referee — no admin access
+      if (user.email && user.email.toLowerCase().includes('dommer')) {
+        // Referee session — restore referee UI without granting admin
+        isReferee = true;
+        showRefCourtSelector();
+        document.getElementById('refereeDashboard').classList.add('active');
+        return;
+      }
       window.isAdmin = true;
       document.getElementById('adminLoginScreen').style.display = 'none';
       document.getElementById('refereeLoginScreen').style.display = 'none';
