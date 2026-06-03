@@ -120,7 +120,7 @@
     .match-vs { font-size: 0.75rem; font-weight: 800; color: var(--muted); text-align: center; }
     .match-num { font-size: 0.68rem; color: var(--muted); font-weight: 600; margin-bottom: 4px; text-align: center; }
     .empty-state { text-align: center; color: var(--muted); padding: 28px 16px; font-size: 0.9rem; line-height: 1.5; }
-    .empty-state .empty-icon { font-size: 1.4rem; display: block; margin-bottom: 8px; opacity: 0.3; }
+    .empty-state .empty-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
     .empty-state .empty-title { font-weight: 700; color: var(--text); font-size: 0.95rem; display: block; }
     .empty-state .empty-sub { font-size: 0.82rem; margin-top: 4px; display: block; }
     .toast { position: fixed; bottom: calc(24px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(80px); opacity: 0; background: #1a1a1a; color: white; padding: 12px 22px; border-radius: 30px; font-size: 0.88rem; font-weight: 600; transition: transform 250ms cubic-bezier(0.23, 1, 0.32, 1), opacity 250ms cubic-bezier(0.23, 1, 0.32, 1); z-index: 99999; pointer-events: none; white-space: nowrap; max-width: calc(100vw - 40px); }
@@ -343,7 +343,6 @@
     }
 
     /* F2 — dark mode via manual toggle (default is light) */
-    :root[data-theme="dark"] header { background: #1e3a26; }
     :root[data-theme="dark"] {
       color-scheme: dark;
       --green: #3e9a4f;
@@ -391,7 +390,7 @@
       if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
       function syncIcon() {
         var b = document.getElementById('themeBtn');
-        if (b) b.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '◑' : '◐';
+        if (b) b.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
       }
       window.toggleTheme = function() {
         if (document.documentElement.getAttribute('data-theme') === 'dark') {
@@ -417,18 +416,18 @@
 <header id="publicHeader">
   <div class="header-top">
     <div class="header-btns header-btns-mirror" aria-hidden="true">
-      <button tabindex="-1">◐</button>
-      <button tabindex="-1">⬡<span class="btn-label"> Dommer</span></button>
-      <button tabindex="-1">▲<span class="btn-label"> Admin</span></button>
+      <button tabindex="-1">🌙</button>
+      <button tabindex="-1">🏁<span class="btn-label"> Dommer</span></button>
+      <button tabindex="-1">🔒<span class="btn-label"> Admin</span></button>
     </div>
     <div class="header-center">
       <h1><span id="headerTitle">Padel Turnering</span></h1>
       <p id="headerSubtitle">Lørdag kl. 12:00</p>
     </div>
     <div class="header-btns">
-      <button id="themeBtn" aria-label="Skift mellem lyst og mørkt tema" title="Lyst/mørkt tema">◐</button>
-      <button id="refereeBtn">Dom<span class="btn-label">mer</span></button>
-      <button id="adminBtn">Adm<span class="btn-label">in</span></button>
+      <button id="themeBtn" aria-label="Skift mellem lyst og mørkt tema" title="Lyst/mørkt tema">🌙</button>
+      <button id="refereeBtn">🏁<span class="btn-label"> Dommer</span></button>
+      <button id="adminBtn">🔒<span class="btn-label"> Admin</span></button>
     </div>
   </div>
   <div class="header-bottom">
@@ -471,9 +470,9 @@
       <div class="field" style="margin-top:12px;">
         <label>Niveau *</label>
         <div class="level-grid">
-          <div class="level-option"><input type="radio" name="niveau" id="ny" value="Ny" required /><label for="ny">Ny</label></div>
-          <div class="level-option"><input type="radio" name="niveau" id="begynder" value="Begynder" /><label for="begynder">Begynder</label></div>
-          <div class="level-option"><input type="radio" name="niveau" id="øvet" value="Øvet" /><label for="øvet">Øvet</label></div>
+          <div class="level-option"><input type="radio" name="niveau" id="ny" value="Ny" required /><label for="ny"><span class="emoji">🌱</span>Ny</label></div>
+          <div class="level-option"><input type="radio" name="niveau" id="begynder" value="Begynder" /><label for="begynder"><span class="emoji">🎯</span>Begynder</label></div>
+          <div class="level-option"><input type="radio" name="niveau" id="øvet" value="Øvet" /><label for="øvet"><span class="emoji">⚡</span>Øvet</label></div>
         </div>
       </div>
       <div class="field full" style="margin-top:12px;">
@@ -500,7 +499,7 @@
 
     <div id="tab-liste" class="tab-content active">
       <div id="participantList" class="participant-list">
-        <div class="empty-state"><span class="empty-icon">○</span><span class="empty-title">Ingen tilmeldte endnu</span><span class="empty-sub">Bliv den første — udfyld formularen ovenfor!</span></div>
+        <div class="empty-state"><span class="empty-icon">🎾</span><span class="empty-title">Ingen tilmeldte endnu</span><span class="empty-sub">Bliv den første — udfyld formularen ovenfor!</span></div>
       </div>
       <button class="btn btn-secondary" onclick="exportCSV()" style="margin-top:12px;">Download tilmeldingsliste</button>
       <div style="margin-top:16px;">
@@ -514,7 +513,7 @@
 
     <div id="tab-hold" class="tab-content">
       <div class="info-box">Hold dannes af admin. De vises her når de er klar.</div>
-      <div id="teamsList" style="margin-top:14px;"><div class="empty-state"><span class="empty-icon">○</span><span class="empty-title">Hold er ikke klar endnu</span><span class="empty-sub">Admin opretter holdene når tilmeldingen lukker.</span></div></div>
+      <div id="teamsList" style="margin-top:14px;"><div class="empty-state"><span class="empty-icon">👥</span><span class="empty-title">Hold er ikke klar endnu</span><span class="empty-sub">Admin opretter holdene når tilmeldingen lukker.</span></div></div>
     </div>
 
     <div id="tab-baner" class="tab-content">
@@ -525,7 +524,7 @@
     <div id="tab-kampe" class="tab-content">
       <div class="info-box">Turneringstræ - vindere rykker videre til næste runde.</div>
       <div id="matchesList" class="matches-list">
-        <div class="empty-state"><span class="empty-icon">○</span><span class="empty-title">Ingen kampe endnu</span><span class="empty-sub">Kampplanen vises her når holdene er dannet.</span></div>
+        <div class="empty-state"><span class="empty-icon">🏆</span><span class="empty-title">Ingen kampe endnu</span><span class="empty-sub">Kampplanen vises her når holdene er dannet.</span></div>
       </div>
       <div id="publicBracket" style="margin-top:16px;"></div>
     </div>
@@ -573,7 +572,7 @@
 <!-- Referee Login Screen -->
 <div id="refereeLoginScreen" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#1a1a2e;z-index:55000;overflow:auto;">
   <div style="max-width:400px;margin:60px auto;background:#16213e;border-radius:12px;padding:40px;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
-    <h1 style="font-size:2rem;margin-bottom:10px;color:#e65100;">Dommer-login</h1>
+    <h1 style="font-size:2rem;margin-bottom:10px;color:#e65100;">🏁 Dommer-login</h1>
     <p style="color:#aaa;margin-bottom:30px;">Log ind for at holde styr på scoren</p>
     <input type="email" id="refLoginEmail" placeholder="Email" style="width:100%;padding:12px;border:1.5px solid #333;border-radius:8px;margin-bottom:12px;font-size:1rem;background:#0f3460;color:white;" />
     <input type="password" id="refLoginPassword" placeholder="Adgangskode" style="width:100%;padding:12px;border:1.5px solid #333;border-radius:8px;margin-bottom:12px;font-size:1rem;background:#0f3460;color:white;" />
@@ -586,7 +585,7 @@
 <!-- Referee Dashboard (full screen overlay) -->
 <div id="refereeDashboard" class="referee-screen">
   <div class="referee-header">
-    <h2>Dommer</h2>
+    <h2>🏁 Dommer</h2>
     <div style="display:flex;gap:8px;">
       <button id="refBackBtn" onclick="backToCourtSelector()" style="display:none;">← Skift baner</button>
       <button onclick="exitReferee()">Luk</button>
@@ -673,7 +672,7 @@
           <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Kriterier for holdgenerering</div>
           <div style="display:flex;flex-direction:column;gap:4px;">
             <div class="crit-row">
-              <div class="checkbox-row-compact"><input type="checkbox" id="genNiveau" checked /><label for="genNiveau">Niveau</label></div>
+              <div class="checkbox-row-compact"><input type="checkbox" id="genNiveau" checked /><label for="genNiveau">🎯 Niveau</label></div>
               <div class="crit-modes" id="modesNiveau">
                 <label class="mode-opt"><input type="radio" name="niveauMode" value="mix" checked /><span>Blandet</span></label>
                 <label class="mode-opt"><input type="radio" name="niveauMode" value="match" /><span>Samme niveau</span></label>
@@ -816,7 +815,7 @@
   // ═══════════════════════════════════════════════════════════════════
   // State
   // ═══════════════════════════════════════════════════════════════════
-  const colors = ['#2d7a3a','#3a6b50','#1e5c2a','#4a7c59'];
+  const colors = ['#2d7a3a','#1565c0','#6a1b9a','#c62828','#e65100','#00695c','#4527a0','#ad1457','#37474f','#558b2f'];
   const levelScores = { 'Ny': 1, 'Begynder': 2, 'Ovet': 3, 'Øvet': 3 };
   const PADEL_POINTS = [0, 15, 30, 40];
   let participants = [];
@@ -1300,14 +1299,14 @@
         ${timerHTML}
         <div class="sk-scoreboard">
           <div class="sk-team">
-            <div class="sk-serve ${sc.serving === 'A' ? 'active' : ''}" onclick="toggleServe(${match.id})">▶</div>
+            <div class="sk-serve ${sc.serving === 'A' ? 'active' : ''}" onclick="toggleServe(${match.id})">🎾</div>
             <div class="sk-team-name">${teamANames}</div>
             <div class="sk-games">${sc.gamesA}</div>
             <div class="sk-points">${sc.ptsA}</div>
           </div>
           <div class="sk-vs">-</div>
           <div class="sk-team">
-            <div class="sk-serve ${sc.serving === 'B' ? 'active' : ''}" onclick="toggleServe(${match.id})">▶</div>
+            <div class="sk-serve ${sc.serving === 'B' ? 'active' : ''}" onclick="toggleServe(${match.id})">🎾</div>
             <div class="sk-team-name">${teamBNames}</div>
             <div class="sk-games">${sc.gamesB}</div>
             <div class="sk-points">${sc.ptsB}</div>
@@ -1598,7 +1597,7 @@
     try {
       await push(ref(db,'deltagere'), { navn, alder, email, telefon, niveau, makker, _ts: serverTimestamp() });
       e.target.reset();
-      showToast(navn + ' er tilmeldt!');
+      showToast('🎾 ' + navn + ' er tilmeldt!');
       if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#2d7a3a','#f9c23c','#4caf50','#fff'] });
     }
     catch(err) { showToast(err.message); }
@@ -1843,7 +1842,7 @@
       const avg = team.length ? (team.reduce((s,p) => s + (levelScores[p.niveau]||1), 0) / team.length).toFixed(1) : 0;
       return `<div class="team-card" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOnTeam(${i},event)">
         <div class="team-header" style="background:${colors[i%colors.length]};display:flex;justify-content:space-between;"><span>Hold ${i+1}</span><span style="font-size:0.7rem;opacity:0.9;">Avg: ${avg}</span></div>
-        <div class="team-members">${team.map(p=>`<div class="team-member-draggable" draggable="true" ondragstart="dragStart(${i},'${p._key}',event)" ondragend="dragEnd(event)"><strong>${esc(p.navn)}</strong> - ${esc(p.niveau)}<button onclick="removeFromTeam(${i},'${p._key}')" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#e53935;">✕</button></div>`).join('')}${team.length===1?'<div style="font-size:0.75rem;color:#e53935;padding:4px;">Mangler partner</div>':''}</div>
+        <div class="team-members">${team.map(p=>`<div class="team-member-draggable" draggable="true" ondragstart="dragStart(${i},'${p._key}',event)" ondragend="dragEnd(event)"><span>👤</span><strong>${esc(p.navn)}</strong> - ${esc(p.niveau)}<button onclick="removeFromTeam(${i},'${p._key}')" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#e53935;">✕</button></div>`).join('')}${team.length===1?'<div style="font-size:0.75rem;color:#e53935;padding:4px;">Mangler partner</div>':''}</div>
       </div>`;
     }).join('') + '</div>';
     if (unassigned.length) el.innerHTML += `<div style="margin-top:16px;padding:14px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:8px;"><div style="font-weight:700;color:#e65100;margin-bottom:8px;">${unassigned.length} uden hold:</div><div style="display:flex;gap:6px;flex-wrap:wrap;">${unassigned.map(p=>`<div style="background:white;padding:6px 10px;border-radius:6px;border:1px solid #ffb74d;font-size:0.85rem;cursor:pointer;" onclick="addToIncompleteTeam('${p._key}')">${esc(p.navn)} +</div>`).join('')}</div></div>`;
@@ -2132,7 +2131,7 @@
   function render() {
     const list = document.getElementById('participantList');
     document.getElementById('countDisplay').textContent = participants.length + ' deltager' + (participants.length !== 1 ? 'e' : '');
-    if (!participants.length) { list.innerHTML = '<div class="empty-state"><span class="empty-icon">○</span><span class="empty-title">Ingen tilmeldte endnu</span><span class="empty-sub">Bliv den første — udfyld formularen ovenfor!</span></div>'; return; }
+    if (!participants.length) { list.innerHTML = '<div class="empty-state"><span class="empty-icon">🎾</span><span class="empty-title">Ingen tilmeldte endnu</span><span class="empty-sub">Bliv den første — udfyld formularen ovenfor!</span></div>'; return; }
     list.innerHTML = participants.map((p,i) => {
       const init = p.navn.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
       const tag = {Ny:'tag-ny',Begynder:'tag-begynder',Ovet:'tag-øvet','Øvet':'tag-øvet'}[p.niveau]||'tag-ny';
@@ -2144,7 +2143,7 @@
   function renderCourtDashboard() {
     const el = document.getElementById('courtDashboard'); if (!el) return;
     const cc = tournament.courtCount || 4;
-    if (!teamsVisible || !currentTeams.length) { el.innerHTML = '<div class="empty-state"><span class="empty-icon">○</span><span class="empty-title">Baneoversigt er ikke klar</span><span class="empty-sub">Vises når turneringen starter.</span></div>'; return; }
+    if (!teamsVisible || !currentTeams.length) { el.innerHTML = '<div class="empty-state"><span class="empty-icon">🏟️</span><span class="empty-title">Baneoversigt er ikke klar</span><span class="empty-sub">Vises når turneringen starter.</span></div>'; return; }
     let html = '<div class="court-grid">';
     for (let c = 1; c <= cc; c++) {
       const match = allMatches.find(m => m.court === c && m.status === 'in-progress');
@@ -2157,8 +2156,8 @@
           ${rem !== null ? `<div id="pub-timer-${match.id}" class="court-timer-public ${up?'time-up':''}">${formatTimer(rem)}</div>` : ''}
           ${sc.advLabel ? `<div style="text-align:center;padding:4px 0;"><span class="court-golden-badge">${sc.advLabel}</span></div>` : ''}
           <div class="court-card-body">
-            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='A'?'active':''}">▶</span> ${tA}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesA}</span><span class="court-padel-pts">(${sc.ptsA})</span></div></div>
-            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='B'?'active':''}">▶</span> ${tB}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesB}</span><span class="court-padel-pts">(${sc.ptsB})</span></div></div>
+            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='A'?'active':''}">🎾</span> ${tA}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesA}</span><span class="court-padel-pts">(${sc.ptsA})</span></div></div>
+            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='B'?'active':''}">🎾</span> ${tB}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesB}</span><span class="court-padel-pts">(${sc.ptsB})</span></div></div>
           </div></div>`;
       } else {
         html += `<div class="court-card"><div class="court-card-header"><span>${getCourtName(c)}</span></div><div class="court-card-idle">Ingen kamp i gang</div></div>`;
@@ -2184,15 +2183,15 @@
 
   function renderTeams() {
     const el = document.getElementById('teamsList');
-    if (!teamsVisible || !currentTeams.length) { el.innerHTML='<div class="empty-state"><span class="empty-icon">○</span><span class="empty-title">Hold er ikke klar endnu</span><span class="empty-sub">Admin opretter holdene når tilmeldingen lukker.</span></div>'; return; }
+    if (!teamsVisible || !currentTeams.length) { el.innerHTML='<div class="empty-state"><span class="empty-icon">👥</span><span class="empty-title">Hold er ikke klar endnu</span><span class="empty-sub">Admin opretter holdene når tilmeldingen lukker.</span></div>'; return; }
     el.innerHTML = '<div class="teams-grid">' + currentTeams.map((team,i) =>
-      `<div class="team-card"><div class="team-header" style="background:${colors[i%colors.length]}">Hold ${i+1}</div><div class="team-members">${team.map(p=>`<div class="team-member"><strong>${esc(p.navn)}</strong> - ${esc(p.niveau)}</div>`).join('')}</div></div>`
+      `<div class="team-card"><div class="team-header" style="background:${colors[i%colors.length]}">Hold ${i+1}</div><div class="team-members">${team.map(p=>`<div class="team-member"><span>👤</span><strong>${esc(p.navn)}</strong> - ${esc(p.niveau)}</div>`).join('')}</div></div>`
     ).join('') + '</div>';
   }
 
   function renderMatches() {
     const el = document.getElementById('matchesList');
-    if (!teamsVisible || !currentTeams.length || !allMatches.length) { el.innerHTML='<div class="empty-state"><span class="empty-icon">○</span><span class="empty-title">Ingen kampe endnu</span><span class="empty-sub">Kampplanen vises her når holdene er dannet.</span></div>'; return; }
+    if (!teamsVisible || !currentTeams.length || !allMatches.length) { el.innerHTML='<div class="empty-state"><span class="empty-icon">🏆</span><span class="empty-title">Ingen kampe endnu</span><span class="empty-sub">Kampplanen vises her når holdene er dannet.</span></div>'; return; }
     const rounds = {}; allMatches.forEach(m => { if(!rounds[m.round]) rounds[m.round]=[]; rounds[m.round].push(m); });
     const rn = Object.keys(rounds).map(Number).sort((a,b)=>a-b); const tot = rn.length;
     let html = '';
