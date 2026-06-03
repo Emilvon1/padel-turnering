@@ -390,7 +390,7 @@
       if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
       function syncIcon() {
         var b = document.getElementById('themeBtn');
-        if (b) b.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+        if (b) b.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '◑' : '◐';
       }
       window.toggleTheme = function() {
         if (document.documentElement.getAttribute('data-theme') === 'dark') {
@@ -416,18 +416,18 @@
 <header id="publicHeader">
   <div class="header-top">
     <div class="header-btns header-btns-mirror" aria-hidden="true">
-      <button tabindex="-1">🌙</button>
-      <button tabindex="-1">🏁<span class="btn-label"> Dommer</span></button>
-      <button tabindex="-1">🔒<span class="btn-label"> Admin</span></button>
+      <button tabindex="-1">◐</button>
+      <button tabindex="-1">⬡<span class="btn-label"> Dommer</span></button>
+      <button tabindex="-1">▲<span class="btn-label"> Admin</span></button>
     </div>
     <div class="header-center">
       <h1><span id="headerTitle">Padel Turnering</span></h1>
       <p id="headerSubtitle">Lørdag kl. 12:00</p>
     </div>
     <div class="header-btns">
-      <button id="themeBtn" aria-label="Skift mellem lyst og mørkt tema" title="Lyst/mørkt tema">🌙</button>
-      <button id="refereeBtn">🏁<span class="btn-label"> Dommer</span></button>
-      <button id="adminBtn">🔒<span class="btn-label"> Admin</span></button>
+      <button id="themeBtn" aria-label="Skift mellem lyst og mørkt tema" title="Lyst/mørkt tema">◐</button>
+      <button id="refereeBtn">Dom<span class="btn-label">mer</span></button>
+      <button id="adminBtn">Adm<span class="btn-label">in</span></button>
     </div>
   </div>
   <div class="header-bottom">
@@ -470,9 +470,9 @@
       <div class="field" style="margin-top:12px;">
         <label>Niveau *</label>
         <div class="level-grid">
-          <div class="level-option"><input type="radio" name="niveau" id="ny" value="Ny" required /><label for="ny"><span class="emoji">🌱</span>Ny</label></div>
-          <div class="level-option"><input type="radio" name="niveau" id="begynder" value="Begynder" /><label for="begynder"><span class="emoji">🎯</span>Begynder</label></div>
-          <div class="level-option"><input type="radio" name="niveau" id="øvet" value="Øvet" /><label for="øvet"><span class="emoji">⚡</span>Øvet</label></div>
+          <div class="level-option"><input type="radio" name="niveau" id="ny" value="Ny" required /><label for="ny">Ny</label></div>
+          <div class="level-option"><input type="radio" name="niveau" id="begynder" value="Begynder" /><label for="begynder">Begynder</label></div>
+          <div class="level-option"><input type="radio" name="niveau" id="øvet" value="Øvet" /><label for="øvet">Øvet</label></div>
         </div>
       </div>
       <div class="field full" style="margin-top:12px;">
@@ -572,7 +572,7 @@
 <!-- Referee Login Screen -->
 <div id="refereeLoginScreen" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#1a1a2e;z-index:55000;overflow:auto;">
   <div style="max-width:400px;margin:60px auto;background:#16213e;border-radius:12px;padding:40px;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
-    <h1 style="font-size:2rem;margin-bottom:10px;color:#e65100;">🏁 Dommer-login</h1>
+    <h1 style="font-size:2rem;margin-bottom:10px;color:#e65100;">Dommer-login</h1>
     <p style="color:#aaa;margin-bottom:30px;">Log ind for at holde styr på scoren</p>
     <input type="email" id="refLoginEmail" placeholder="Email" style="width:100%;padding:12px;border:1.5px solid #333;border-radius:8px;margin-bottom:12px;font-size:1rem;background:#0f3460;color:white;" />
     <input type="password" id="refLoginPassword" placeholder="Adgangskode" style="width:100%;padding:12px;border:1.5px solid #333;border-radius:8px;margin-bottom:12px;font-size:1rem;background:#0f3460;color:white;" />
@@ -585,7 +585,7 @@
 <!-- Referee Dashboard (full screen overlay) -->
 <div id="refereeDashboard" class="referee-screen">
   <div class="referee-header">
-    <h2>🏁 Dommer</h2>
+    <h2>Dommer</h2>
     <div style="display:flex;gap:8px;">
       <button id="refBackBtn" onclick="backToCourtSelector()" style="display:none;">← Skift baner</button>
       <button onclick="exitReferee()">Luk</button>
@@ -672,7 +672,7 @@
           <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Kriterier for holdgenerering</div>
           <div style="display:flex;flex-direction:column;gap:4px;">
             <div class="crit-row">
-              <div class="checkbox-row-compact"><input type="checkbox" id="genNiveau" checked /><label for="genNiveau">🎯 Niveau</label></div>
+              <div class="checkbox-row-compact"><input type="checkbox" id="genNiveau" checked /><label for="genNiveau">Niveau</label></div>
               <div class="crit-modes" id="modesNiveau">
                 <label class="mode-opt"><input type="radio" name="niveauMode" value="mix" checked /><span>Blandet</span></label>
                 <label class="mode-opt"><input type="radio" name="niveauMode" value="match" /><span>Samme niveau</span></label>
@@ -1299,14 +1299,14 @@
         ${timerHTML}
         <div class="sk-scoreboard">
           <div class="sk-team">
-            <div class="sk-serve ${sc.serving === 'A' ? 'active' : ''}" onclick="toggleServe(${match.id})">🎾</div>
+            <div class="sk-serve ${sc.serving === 'A' ? 'active' : ''}" onclick="toggleServe(${match.id})">▶</div>
             <div class="sk-team-name">${teamANames}</div>
             <div class="sk-games">${sc.gamesA}</div>
             <div class="sk-points">${sc.ptsA}</div>
           </div>
           <div class="sk-vs">-</div>
           <div class="sk-team">
-            <div class="sk-serve ${sc.serving === 'B' ? 'active' : ''}" onclick="toggleServe(${match.id})">🎾</div>
+            <div class="sk-serve ${sc.serving === 'B' ? 'active' : ''}" onclick="toggleServe(${match.id})">▶</div>
             <div class="sk-team-name">${teamBNames}</div>
             <div class="sk-games">${sc.gamesB}</div>
             <div class="sk-points">${sc.ptsB}</div>
@@ -1597,7 +1597,7 @@
     try {
       await push(ref(db,'deltagere'), { navn, alder, email, telefon, niveau, makker, _ts: serverTimestamp() });
       e.target.reset();
-      showToast('🎾 ' + navn + ' er tilmeldt!');
+      showToast(navn + ' er tilmeldt!');
       if (typeof confetti === 'function') confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#2d7a3a','#f9c23c','#4caf50','#fff'] });
     }
     catch(err) { showToast(err.message); }
@@ -2156,8 +2156,8 @@
           ${rem !== null ? `<div id="pub-timer-${match.id}" class="court-timer-public ${up?'time-up':''}">${formatTimer(rem)}</div>` : ''}
           ${sc.advLabel ? `<div style="text-align:center;padding:4px 0;"><span class="court-golden-badge">${sc.advLabel}</span></div>` : ''}
           <div class="court-card-body">
-            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='A'?'active':''}">🎾</span> ${tA}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesA}</span><span class="court-padel-pts">(${sc.ptsA})</span></div></div>
-            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='B'?'active':''}">🎾</span> ${tB}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesB}</span><span class="court-padel-pts">(${sc.ptsB})</span></div></div>
+            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='A'?'active':''}">▶</span> ${tA}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesA}</span><span class="court-padel-pts">(${sc.ptsA})</span></div></div>
+            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='B'?'active':''}">▶</span> ${tB}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesB}</span><span class="court-padel-pts">(${sc.ptsB})</span></div></div>
           </div></div>`;
       } else {
         html += `<div class="court-card"><div class="court-card-header"><span>${getCourtName(c)}</span></div><div class="court-card-idle">Ingen kamp i gang</div></div>`;
