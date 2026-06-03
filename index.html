@@ -207,7 +207,7 @@
     .checkbox-row-compact input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); }
     .checkbox-row-compact label { font-size: 0.85rem; font-weight: 500; color: var(--text); cursor: pointer; text-transform: none; letter-spacing: 0; }
     .admin-tabs .tab { flex: 1; text-align: center; }
-    .public-tabs .tab { flex: 1; text-align: center; }
+    .public-tabs .tab { flex: 1 0 auto; text-align: center; }
     .crit-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 30px; }
     .crit-modes { display: flex; gap: 3px; flex-shrink: 0; }
     .mode-opt { display: flex; }
@@ -2193,7 +2193,7 @@
     const rn = Object.keys(rounds).map(Number).sort((a,b)=>a-b); const tot = rn.length;
     let html = '';
     rn.forEach(r => {
-      html += `<div style="font-weight:700;color:var(--green);margin:12px 0 6px;">${getRoundName(r,tot)}</div>`;
+      let roundHtml = '';
       rounds[r].forEach(m => {
         if (m.teamA===-1||m.teamB===-1||(m.teamA==null&&m.teamB==null)) return;
         const n1 = getTeamShort(m.teamA);
@@ -2202,8 +2202,9 @@
         let score = 'VS', col = 'var(--muted)';
         if (m.status === 'completed') { score = sc ? `${sc.gamesA}-${sc.gamesB}` : `${m.scoreA}-${m.scoreB}`; col = '#4caf50'; }
         else if (m.status === 'in-progress') { score = sc ? `${sc.gamesA}(${sc.ptsA}) - ${sc.gamesB}(${sc.ptsB})` : 'I gang'; col = '#e65100'; }
-        html += `<div class="match"><div><div class="match-num"><span class="bane-tag">${getCourtName(m.court)}</span> Hold ${m.teamA != null ? m.teamA+1 : '?'}</div><div class="match-team">${n1}</div></div><div class="match-vs" style="font-weight:700;color:${col};">${score}</div><div><div class="match-num">Hold ${m.teamB != null ? m.teamB+1 : '?'}</div><div class="match-team">${n2}</div></div></div>`;
+        roundHtml += `<div class="match"><div><div class="match-num"><span class="bane-tag">${getCourtName(m.court)}</span> Hold ${m.teamA != null ? m.teamA+1 : '?'}</div><div class="match-team">${n1}</div></div><div class="match-vs" style="font-weight:700;color:${col};">${score}</div><div><div class="match-num">Hold ${m.teamB != null ? m.teamB+1 : '?'}</div><div class="match-team">${n2}</div></div></div>`;
       });
+      if (roundHtml) html += `<div style="font-weight:700;color:var(--green);margin:12px 0 6px;">${getRoundName(r,tot)}</div>` + roundHtml;
     });
     const maxR = Math.max(...allMatches.map(m=>m.round));
     const fin = allMatches.find(m => m.round === maxR);
