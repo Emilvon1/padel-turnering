@@ -27,7 +27,7 @@
       --border: #ddd;
       --radius: 12px;
       --shadow: 0 2px 12px rgba(0,0,0,0.08);
-      /* Referee panel — light theme defaults */
+      /* Referee panel — light theme */
       --ref-bg: #f0f2f5;
       --ref-text: #1a1a1a;
       --ref-muted: #666;
@@ -130,6 +130,7 @@
     :root[data-theme="dark"] .tabs { box-shadow: 0 3px 0 rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.2); border-top-color: rgba(255,255,255,0.08); }
     :root[data-theme="dark"] .tab { background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.08) 100%); }
     :root[data-theme="dark"] .tab:hover:not(.active) { background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.04) 100%); }
+    :root[data-theme="dark"] .tab.active { background: #2d7a3a; color: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .info-box { background: var(--green-pale); border-radius: 8px; padding: 11px 14px; font-size: 0.82rem; color: var(--green); margin-bottom: 14px; }
@@ -1310,8 +1311,8 @@
           </div>
         </div>
         <div class="sk-buttons">
-          <button class="sk-point-btn team-a" onclick="refAddPoint(${match.id},'A')">+ Point<br>${teamANames.split(' & ')[0]}</button>
-          <button class="sk-point-btn team-b" onclick="refAddPoint(${match.id},'B')">+ Point<br>${teamBNames.split(' & ')[0]}</button>
+          <button class="sk-point-btn team-a" onclick="refAddPoint(${match.id},'A')">+ Point<br>Hold ${match.teamA + 1}</button>
+          <button class="sk-point-btn team-b" onclick="refAddPoint(${match.id},'B')">+ Point<br>Hold ${match.teamB + 1}</button>
         </div>
         <div class="sk-undo-row">
           <button class="sk-undo-btn" onclick="refUndo(${match.id})" ${sc.canUndo ? '' : 'disabled style="opacity:0.3;cursor:default;"'}>↩ Fortryd</button>
@@ -1516,6 +1517,7 @@
         renderTeams(); renderMatches(); renderPublicBracket(); renderCourtDashboard(); updatePublicLeaderboard(); updateTabBadges();
         if (window.isAdmin) { renderAdminTeams(); renderAdminMatches(); updateLeaderboard(); }
         if (isReferee && document.getElementById('refScorekeeper').style.display !== 'none') renderRefScorekeeper();
+        if (isReferee && document.getElementById('refCourtSelector').style.display !== 'none') showRefCourtSelector();
       }
       checkForTournamentWinner();
     }
