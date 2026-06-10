@@ -1365,7 +1365,17 @@
         <span id="rulesArrow">▼</span>
       </button>
       <div class="rules-body" id="rulesBody" style="display:none;">
-        <ol class="rules-list">
+        ${isAmericano() ? `<ol class="rules-list">
+          <li>Alle hold spiller mod alle andre hold — ét point tæller direkte som ét point i den samlede pointtotal.</li>
+          <li>Bolden skal serve diagonalt og ramme modstanderens servicefelt — serven skal sprette i feltet <em>inden</em> den eventuelt rammer glasvæg eller sidegitter.</li>
+          <li>Bolden må spille én gang på gulvet og derefter på vægge/gitter. Spilles bolden direkte mod modstanderens glasvæg (uden at ramme gulvet) er det en fejl.</li>
+          <li>Bolden må ikke spille på det eget holds side mere end én gang — undtagen ved serv.</li>
+          <li>Et point tabes, hvis bolden spiller to gange på gulvet på holdets side, rammer net, spilles ud af banen, eller rammer spiller/tøj.</li>
+          <li>Serv skal udføres nedefra, bolden slippes og rammes under hoftehøjde. Begge fødder bag bundlinjen ved serv.</li>
+          <li>Servanten har to serveforsøg. Dobbeltfejl giver modstanderne point.</li>
+          <li>Kampen spilles i den tildelte tid — ved tidudløb er scoren endelig. Flest akkumulerede point vinder kampen.</li>
+          <li>Ranglisten opgøres efter samlede point på tværs af alle kampe.</li>
+        </ol>` : `<ol class="rules-list">
           <li>Bolden skal serve diagonalt og ramme modstanderens servicefelt — serven skal sprette i feltet <em>inden</em> den eventuelt rammer glasvæg eller sidegitter.</li>
           <li>Bolden må spille én gang på gulvet og derefter på vægge/gitter. Spilles bolden direkte mod modstanderens glasvæg (uden at ramme gulvet) er det en fejl.</li>
           <li>Bolden må ikke spille på det eget holds side mere end én gang — undtagen ved serv.</li>
@@ -1373,10 +1383,10 @@
           <li>Serv skal udføres nedefra, bolden slippes og rammes under hoftehøjde. Begge fødder bag bundlinjen ved serv.</li>
           <li>Servanten har to serveforsøg. Dobbeltfejl giver modstanderne point.</li>
           <li>Bolden ud af banen via en åbning tæller som out, medmindre banen er lukket. Bolden kan hentes og spilles tilbage, hvis der er passage.</li>
-          <li>Point tælles: 0, 15, 30, 40, Deuce, Ad-ind/Ad-ud. Ved Deuce kræves to point i træk for at vinde spillet.</li>
+          <li>Point tælles: <em>0, 15, 30, 40, Deuce, Ad-ind/Ad-ud.</em> Ved Deuce kræves to point i træk for at vinde spillet.</li>
           <li>Et sæt vindes ved 6 spil med mindst 2 spils forskel. Ved 6-6 spilles tiebreak til 7 point (med mindst 2 points forskel).</li>
           <li>En kamp vindes normalt bedst af 3 sæt — medmindre turneringen bruger andre regler.</li>
-        </ol>
+        </ol>`}
       </div>
     </div>`;
 
