@@ -108,10 +108,11 @@
     .team-members { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
     .team-member { font-size: 0.88rem; display: flex; align-items: center; gap: 8px; }
     .matches-list { display: flex; flex-direction: column; gap: 10px; }
-    .match { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--gray); }
+    .match { display: grid; grid-template-columns: auto 1fr auto 1fr; align-items: center; gap: 8px; padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--gray); }
     @media (max-width: 520px) { .match { padding: 10px 8px; gap: 6px; } }
     .match-team { font-size: 0.85rem; font-weight: 600; text-align: center; }
     .match-vs { font-size: 0.75rem; font-weight: 800; color: var(--muted); text-align: center; }
+    .match-bane { display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .match-num { font-size: 0.68rem; color: var(--muted); font-weight: 600; margin-bottom: 4px; text-align: center; }
     .empty-state { text-align: center; color: var(--muted); padding: 28px 16px; font-size: 0.9rem; line-height: 1.5; }
     .empty-state .empty-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
@@ -172,18 +173,17 @@
     .bracket-team-row.winner { background: var(--green-pale); font-weight: 700; }
     .bracket-team-row .score { font-weight: 700; min-width: 20px; text-align: right; }
     .bracket-bane { font-size: 0.72rem; color: var(--muted); text-align: center; padding: 2px; background: var(--gray); }
-    .bracket-connector { display: flex; flex-direction: column; justify-content: space-around; width: 40px; flex-shrink: 0; }
-    .bracket-connector-pair { display: flex; flex-direction: column; flex: 1; justify-content: center; position: relative; }
+    .bracket-connector { display: flex; flex-direction: column; width: 40px; flex-shrink: 0; }
+    .bracket-connector-spacer { height: 22.5px; margin-bottom: 8px; flex-shrink: 0; }
+    .bracket-connector-pair { display: flex; flex-direction: column; flex: 1; justify-content: space-around; position: relative; }
+
     /* Vertical bar connecting the two match stubs, centered horizontally */
-    .bracket-connector-pair::before { content: ''; position: absolute; left: 50%; top: 25%; bottom: 25%; width: 2px; background: #bbb; transform: translateX(-50%); }
-    /* Horizontal line from vertical bar midpoint to next round */
-    .bracket-connector-pair::after { content: ''; position: absolute; left: 50%; right: 0; top: 50%; height: 2px; background: #bbb; }
+    .bracket-connector-pair::before { content: ''; position: absolute; left: 50%; top: var(--bar-top, 25%); bottom: var(--bar-bottom, 25%); width: 2px; background: #bbb; transform: translateX(-50%); }
+    .bracket-connector-pair::after { content: ''; position: absolute; left: 50%; right: 0; top: var(--bar-mid, 50%); height: 2px; background: #bbb; }
     .bracket-connector-pair .conn-top,
     .bracket-connector-pair .conn-bot { flex: 1; position: relative; }
-    /* Stub from top match center going right to vertical bar */
-    .bracket-connector-pair .conn-top::after { content: ''; position: absolute; left: 0; right: 50%; top: 50%; height: 2px; background: #bbb; }
-    /* Stub from bottom match center going right to vertical bar */
-    .bracket-connector-pair .conn-bot::after { content: ''; position: absolute; left: 0; right: 50%; top: 50%; height: 2px; background: #bbb; }
+    .bracket-connector-pair .conn-top::after { content: ''; position: absolute; left: 0; right: 50%; top: var(--stub-top-0, 50%); height: 2px; background: #bbb; }
+    .bracket-connector-pair .conn-bot::after { content: ''; position: absolute; left: 0; right: 50%; top: var(--stub-top-1, 50%); height: 2px; background: #bbb; }
     .round-header { background: var(--green); color: white; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; margin: 16px 0 10px; text-align: center; }
     .round-header:first-child { margin-top: 0; }
     .filter-pills { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -2206,7 +2206,7 @@
         let score = 'VS', col = 'var(--muted)';
         if (m.status === 'completed') { score = sc ? `${sc.gamesA}-${sc.gamesB}` : `${m.scoreA}-${m.scoreB}`; col = '#4caf50'; }
         else if (m.status === 'in-progress') { score = sc ? `${sc.gamesA}(${sc.ptsA}) - ${sc.gamesB}(${sc.ptsB})` : 'I gang'; col = '#e65100'; }
-        roundHtml += `<div class="match"><div><div class="match-num"><span class="bane-tag">${getCourtName(m.court)}</span> Hold ${m.teamA != null ? m.teamA+1 : '?'}</div><div class="match-team">${n1}</div></div><div class="match-vs" style="font-weight:700;color:${col};">${score}</div><div><div class="match-num">Hold ${m.teamB != null ? m.teamB+1 : '?'}</div><div class="match-team">${n2}</div></div></div>`;
+        roundHtml += `<div class="match"><div class="match-bane"><span class="bane-tag">${getCourtName(m.court)}</span></div><div>${m.teamA != null ? `<div class="match-num">Hold ${m.teamA+1}</div>` : ''}<div class="match-team">${n1}</div></div><div class="match-vs" style="font-weight:700;color:${col};">${score}</div><div>${m.teamB != null ? `<div class="match-num">Hold ${m.teamB+1}</div>` : ''}<div class="match-team">${n2}</div></div></div>`;
       });
       if (roundHtml) html += `<div style="font-weight:700;color:var(--green);margin:12px 0 6px;">${getRoundName(r,tot)}</div>` + roundHtml;
     });
@@ -2241,10 +2241,43 @@
         html += `<div class="bracket-match ${cls}"><div class="bracket-bane">${getCourtName(m.court)}</div><div class="bracket-team-row ${w1}"><span>${n1}</span><span class="score">${s1}</span></div><div class="bracket-team-row ${w2}"><span>${n2}</span><span class="score">${s2}</span></div></div>`;
       });
       html += '</div></div>';
-      if (ri < rn.length - 1) { const mc = rounds[r].length; const pairs = Math.floor(mc/2); if (mc===1){html+='<div class="bracket-connector"><div style="flex:1;display:flex;align-items:center;"><div style="width:100%;height:2px;background:#bbb;"></div></div></div>';}else if(pairs>0){html+='<div class="bracket-connector">';for(let p=0;p<pairs;p++)html+='<div class="bracket-connector-pair"><div class="conn-top"></div><div class="conn-bot"></div></div>';if(mc%2===1)html+='<div style="flex:1;display:flex;align-items:center;"><div style="width:100%;height:1.5px;background:var(--border);"></div></div>';html+='</div>';}}
+      if (ri < rn.length - 1) { const mc = rounds[r].length; const pairs = Math.floor(mc/2); if (mc===1){html+='<div class="bracket-connector"><div class="bracket-connector-spacer"></div><div style="flex:1;display:flex;align-items:center;"><div style="width:100%;height:2px;background:#bbb;"></div></div></div>';}else if(pairs>0){html+='<div class="bracket-connector"><div class="bracket-connector-spacer"></div>';for(let p=0;p<pairs;p++)html+='<div class="bracket-connector-pair"><div class="conn-top"></div><div class="conn-bot"></div></div>';if(mc%2===1)html+='<div style="flex:1;display:flex;align-items:center;"><div style="width:100%;height:1.5px;background:var(--border);"></div></div>';html+='</div>';}}
     });
     html += '</div></div>';
     el.innerHTML = html;
+    fixBracketConnectors(el);
+  }
+
+  function fixBracketConnectors(el) {
+    requestAnimationFrame(() => {
+      el.querySelectorAll('.bracket-connector-pair').forEach((pair, pairIdx) => {
+        const connector = pair.closest('.bracket-connector');
+        const bracketCol = connector.previousElementSibling;
+        if (!bracketCol) return;
+        const matchEls = bracketCol.querySelectorAll('.bracket-match');
+        const m0 = matchEls[pairIdx * 2];
+        const m1 = matchEls[pairIdx * 2 + 1];
+        if (!m0 || !m1) return;
+        const pR = pair.getBoundingClientRect();
+        const r0 = m0.getBoundingClientRect();
+        const r1 = m1.getBoundingClientRect();
+        const c0 = r0.top + r0.height / 2 - pR.top; // match 0 center relative to pair top
+        const c1 = r1.top + r1.height / 2 - pR.top; // match 1 center relative to pair top
+        const h = pR.height;
+        const p0 = (c0 / h * 100).toFixed(2);
+        const p1 = (c1 / h * 100).toFixed(2);
+        const mid = ((c0 + c1) / 2 / h * 100).toFixed(2);
+        // conn-top and conn-bot each take half the pair height
+        const halfH = h / 2;
+        const stub0 = (c0 / halfH * 100).toFixed(2);
+        const stub1 = ((c1 - halfH) / halfH * 100).toFixed(2);
+        pair.style.setProperty('--bar-top', p0 + '%');
+        pair.style.setProperty('--bar-bottom', (100 - parseFloat(p1)).toFixed(2) + '%');
+        pair.style.setProperty('--bar-mid', mid + '%');
+        pair.style.setProperty('--stub-top-0', stub0 + '%');
+        pair.style.setProperty('--stub-top-1', stub1 + '%');
+      });
+    });
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -2301,7 +2334,8 @@
   // ═══════════════════════════════════════════════════════════════════
   // Tab switching
   // ═══════════════════════════════════════════════════════════════════
-  window.switchTab = (name, btn) => { const m = document.querySelector('body > main'); m.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active')); m.querySelectorAll('.tabs .tab').forEach(el=>el.classList.remove('active')); const t = m.querySelector('#tab-'+name)||document.getElementById('tab-'+name); if(t)t.classList.add('active'); if(btn)btn.classList.add('active'); };
+  window.switchTab = (name, btn) => { const m = document.querySelector('body > main'); m.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active')); m.querySelectorAll('.tabs .tab').forEach(el=>el.classList.remove('active')); const t = m.querySelector('#tab-'+name)||document.getElementById('tab-'+name); if(t)t.classList.add('active'); if(btn)btn.classList.add('active'); if(name==='kampe') requestAnimationFrame(window.alignBracketLines); };
+  window.alignBracketLines = function() { document.querySelectorAll('.bracket-connector-pair').forEach((pair,pairIdx)=>{ const connector=pair.closest('.bracket-connector'); const bracketCol=connector?.previousElementSibling; if(!bracketCol)return; const matchEls=bracketCol.querySelectorAll('.bracket-match'); const m0=matchEls[pairIdx*2]; const m1=matchEls[pairIdx*2+1]; if(!m0||!m1)return; const pR=pair.getBoundingClientRect(); const r0=m0.getBoundingClientRect(); const r1=m1.getBoundingClientRect(); const h=pR.height; if(!h)return; const c0=r0.top+r0.height/2-pR.top; const c1=r1.top+r1.height/2-pR.top; const p0=(c0/h*100).toFixed(2)+'%'; const p1=((1-c1/h)*100).toFixed(2)+'%'; const mid=((c0+c1)/2/h*100).toFixed(2)+'%'; const s0=(c0/(h/2)*100).toFixed(2)+'%'; const s1=((c1-h/2)/(h/2)*100).toFixed(2)+'%'; pair.style.setProperty('--bar-top',p0); pair.style.setProperty('--bar-bottom',p1); pair.style.setProperty('--bar-mid',mid); pair.style.setProperty('--stub-top-0',s0); pair.style.setProperty('--stub-top-1',s1); }); };
   window.switchAdminTab = (name, btn) => { const a = document.getElementById('adminDashboard'); a.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active')); a.querySelectorAll('.tab').forEach(el=>el.classList.remove('active')); const t = document.getElementById('admin-tab-'+name)||document.getElementById('tab-'+name); if(t){t.classList.add('active');if(btn)btn.classList.add('active');} };
 
   // ═══════════════════════════════════════════════════════════════════
