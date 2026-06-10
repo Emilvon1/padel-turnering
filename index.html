@@ -635,6 +635,20 @@
             </select>
           </div>
           <div class="field"><label>Standard kamptid (min)</label><input type="number" id="defaultMatchTime" value="20" min="1" max="120" /></div>
+          <div class="field"><label>Kampafslutning</label>
+            <select id="matchEndCondition" onchange="updateMatchEndUI()">
+              <option value="time">Tid</option>
+              <option value="points">Point (første til X)</option>
+              <option value="both">Begge (tid eller point)</option>
+            </select>
+          </div>
+          <div class="field" id="winPointsField" style="display:none;"><label>Point til sejr</label><input type="number" id="winPoints" value="32" min="1" max="500" /></div>
+          <div class="field"><label>Tidsviser hos dommer</label>
+            <select id="timerDisplay">
+              <option value="countdown">Tidstagning (nedtæller)</option>
+              <option value="stopwatch">Stopur (optæller)</option>
+            </select>
+          </div>
         </div>
         <div style="margin-top:24px;">
           <h3 style="color:var(--green);font-size:1rem;margin-bottom:12px;">Banenavne</h3>
@@ -1008,6 +1022,27 @@
     return Math.max(0, (timer.remaining ?? timer.duration) - elapsed);
   }
 
+  function getElapsed(timer) {
+    if (!timer || !timer.duration) return 0;
+    const base = timer.duration - (timer.remaining ?? timer.duration);
+    if (!timer.running || !timer.startedAt) return base;
+    return base + Math.floor((Date.now() - timer.startedAt) / 1000);
+  }
+
+  function isStopwatch() {
+    return (tournament.timerDisplay || 'countdown') === 'stopwatch';
+  }
+
+  function matchEndsOnPoints() {
+    const c = tournament.matchEndCondition || 'time';
+    return c === 'points' || c === 'both';
+  }
+
+  function matchEndsOnTime() {
+    const c = tournament.matchEndCondition || 'time';
+    return c === 'time' || c === 'both';
+  }
+
   function formatTimer(secs) {
     if (secs == null) return '--:--';
     const m = Math.floor(secs / 60);
@@ -1023,7 +1058,7 @@
       const snap = await get(ref(db, 'tournaments/default'));
       if (snap.exists()) { tournament = snap.val(); }
       else {
-        tournament = { name: 'Padel Turnering', dateTime: 'Lørdag kl. 12:00', location: '', maxParticipants: null, courtCount: 4, format: 'knockout', scoringSystem: 'padel', courtNames: {}, showEmail: false, showTelefon: false, defaultMatchTime: 20 };
+        tournament = { name: 'Padel Turnering', dateTime: 'Lørdag kl. 12:00', location: '', maxParticipants: null, courtCount: 4, format: 'knockout', scoringSystem: 'padel', courtNames: {}, showEmail: false, showTelefon: false, defaultMatchTime: 20, matchEndCondition: 'time', winPoints: 32, timerDisplay: 'countdown' };
         await set(ref(db, 'tournaments/default'), tournament);
       }
       applyTournamentSettings();
@@ -1048,8 +1083,14 @@
       document.getElementById('tournamentLocation').value = tournament.location || '';
       document.getElementById('maxParticipants').value = tournament.maxParticipants || '';
       document.getElementById('courtCount').value = tournament.courtCount || 4;
-      document.getElementById('tournamentFormat').value = tournament.format || 'knockout';
       document.getElementById('tournamentScoringSystem').value = tournament.scoringSystem || 'padel';
+      const mecEl = document.getElementById('matchEndCondition');
+      const wpEl = document.getElementById('winPoints');
+      const tdEl = document.getElementById('timerDisplay');
+      if (mecEl) mecEl.value = tournament.matchEndCondition || 'time';
+      if (wpEl) wpEl.value = tournament.winPoints || 32;
+      if (tdEl) tdEl.value = tournament.timerDisplay || 'countdown';
+      updateMatchEndUI();
       document.getElementById('showEmail').checked = tournament.showEmail !== false;
       document.getElementById('showTelefon').checked = tournament.showTelefon !== false;
       document.getElementById('defaultMatchTime').value = tournament.defaultMatchTime || 20;
@@ -1294,11 +1335,17 @@
         </div>`;
       }
 
+      const stopwatch = isStopwatch();
+      const elapsed = getElapsed(timer);
+      const timerVal = stopwatch ? elapsed : (remaining ?? 0);
+      const timerUpSW = stopwatch && matchEndsOnTime() && timer.duration && elapsed >= timer.duration;
+      const showTimeUp = stopwatch ? timerUpSW : timerUp;
+      const timerLabel = stopwatch ? 'Tid spillet' : 'Tid tilbage';
       let timerHTML = `<div class="sk-timer">
-        <div class="sk-timer-display ${timerUp ? 'time-up' : ''}" id="timer-${match.id}">${formatTimer(remaining)}</div>
+        <div style="font-size:0.7rem;color:#888;text-align:center;margin-bottom:2px;">${timerLabel}</div>
+        <div class="sk-timer-display ${showTimeUp ? 'time-up' : ''}" id="timer-${match.id}">${formatTimer(timerVal)}</div>
         <div class="sk-timer-controls">
-          <input type="number" id="timer-input-${match.id}" value="${Math.ceil((timer.duration || (tournament.defaultMatchTime || 20) * 60) / 60)}" min="1" max="120" placeholder="min" />
-          <button onclick="setTimer(${match.id})">Sæt</button>
+          ${matchEndsOnTime() || stopwatch ? `<input type="number" id="timer-input-${match.id}" value="${Math.ceil((timer.duration || (tournament.defaultMatchTime || 20) * 60) / 60)}" min="1" max="120" placeholder="min" /><button onclick="setTimer(${match.id})">Sæt</button>` : ''}
           ${timer.running ? `<button onclick="pauseTimer(${match.id})">Pause</button>` : `<button onclick="startTimer(${match.id})">Start</button>`}
           <button onclick="resetTimer(${match.id})">Nulstil</button>
         </div>
@@ -1388,14 +1435,29 @@
         timerIntervals[m.id] = setInterval(() => {
           const el = document.getElementById('timer-' + m.id);
           if (!el) return;
-          const rem = getTimerRemaining(m.timer);
-          el.textContent = formatTimer(rem);
-          if (rem <= 0) { el.classList.add('time-up'); clearInterval(timerIntervals[m.id]); delete timerIntervals[m.id]; if (!buzzedMatches.has(m.id)) { buzzedMatches.add(m.id); playBuzzer(); } }
-          else el.classList.remove('time-up');
+          const sw = isStopwatch();
+          const val = sw ? getElapsed(m.timer) : getTimerRemaining(m.timer);
+          el.textContent = formatTimer(val);
+          const timeUp = sw
+            ? (matchEndsOnTime() && m.timer.duration && getElapsed(m.timer) >= m.timer.duration)
+            : (val <= 0);
+          if (timeUp) {
+            el.classList.add('time-up');
+            clearInterval(timerIntervals[m.id]); delete timerIntervals[m.id];
+            if (!buzzedMatches.has(m.id)) { buzzedMatches.add(m.id); playBuzzer(); }
+          } else {
+            el.classList.remove('time-up');
+          }
         }, 1000);
       }
     });
   }
+
+  window.updateMatchEndUI = () => {
+    const val = document.getElementById('matchEndCondition')?.value;
+    const field = document.getElementById('winPointsField');
+    if (field) field.style.display = (val === 'points' || val === 'both') ? '' : 'none';
+  };
 
   window.toggleRules = () => {
     const body = document.getElementById('rulesBody');
@@ -1429,6 +1491,16 @@
       const as = m.americanoScore;
       as.history.push({ pointsA: as.pointsA, pointsB: as.pointsB });
       if (team === 'A') as.pointsA++; else as.pointsB++;
+      // Auto-finish if point threshold reached
+      if (matchEndsOnPoints()) {
+        const limit = tournament.winPoints || 32;
+        if (as.pointsA >= limit || as.pointsB >= limit) {
+          completeMatchWithScore(m, as.pointsA, as.pointsB);
+          saveBracketDataNow(); renderRefScorekeeper();
+          showToast('Kamp afsluttet! ' + as.pointsA + '-' + as.pointsB);
+          return;
+        }
+      }
     } else {
       if (!m.padelScore) m.padelScore = defaultPadelScore();
       addPadelPoint(m.padelScore, team);
@@ -1639,7 +1711,8 @@
     const courtCount = parseInt(document.getElementById('courtCount').value) || 4;
     const courtNames = {};
     for (let i = 1; i <= courtCount; i++) { const el = document.getElementById('courtName' + i); courtNames[i] = el ? el.value.trim() || ('Bane ' + i) : 'Bane ' + i; }
-    tournament = { name: document.getElementById('tournamentName').value, dateTime: document.getElementById('tournamentDateTime').value, location: document.getElementById('tournamentLocation').value, maxParticipants: parseInt(document.getElementById('maxParticipants').value) || null, courtCount, format: document.getElementById('tournamentFormat').value, scoringSystem: document.getElementById('tournamentScoringSystem').value, courtNames, showEmail: document.getElementById('showEmail').checked, showTelefon: document.getElementById('showTelefon').checked, defaultMatchTime: parseInt(document.getElementById('defaultMatchTime').value) || 20 };
+    const matchEndCondition = document.getElementById('matchEndCondition').value;
+    tournament = { name: document.getElementById('tournamentName').value, dateTime: document.getElementById('tournamentDateTime').value, location: document.getElementById('tournamentLocation').value, maxParticipants: parseInt(document.getElementById('maxParticipants').value) || null, courtCount, scoringSystem: document.getElementById('tournamentScoringSystem').value, courtNames, showEmail: document.getElementById('showEmail').checked, showTelefon: document.getElementById('showTelefon').checked, defaultMatchTime: parseInt(document.getElementById('defaultMatchTime').value) || 20, matchEndCondition, winPoints: parseInt(document.getElementById('winPoints').value) || 32, timerDisplay: document.getElementById('timerDisplay').value };
     try { await set(ref(db, 'tournaments/default'), tournament); applyTournamentSettings(); showToast('Indstillinger gemt'); }
     catch(err) { showToast('Fejl: ' + err.message); }
   };
