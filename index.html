@@ -636,6 +636,12 @@
               <option value="americano">Americano (Round-robin)</option>
             </select>
           </div>
+          <div class="field"><label>Pointsystem</label>
+            <select id="tournamentScoringSystem">
+              <option value="padel">Rigtigt padel (0/15/30/40/deuce)</option>
+              <option value="americano">Americano (akkumulerede point)</option>
+            </select>
+          </div>
           <div class="field"><label>Standard kamptid (min)</label><input type="number" id="defaultMatchTime" value="20" min="1" max="120" /></div>
         </div>
         <div style="margin-top:24px;">
@@ -886,6 +892,14 @@
     return { pointsA: 0, pointsB: 0, gamesA: 0, gamesB: 0, serving: 'A', history: [] };
   }
 
+  function defaultAmericanoScore() {
+    return { pointsA: 0, pointsB: 0, history: [] };
+  }
+
+  function isAmericano() {
+    return (tournament.scoringSystem || 'padel') === 'americano';
+  }
+
   function padelPointLabel(idx) {
     return String(PADEL_POINTS[Math.min(idx, 3)] ?? 0);
   }
@@ -1017,7 +1031,7 @@
       const snap = await get(ref(db, 'tournaments/default'));
       if (snap.exists()) { tournament = snap.val(); }
       else {
-        tournament = { name: 'Padel Turnering', dateTime: 'Lørdag kl. 12:00', location: '', maxParticipants: null, courtCount: 4, format: 'knockout', courtNames: {}, showEmail: false, showTelefon: false, defaultMatchTime: 20 };
+        tournament = { name: 'Padel Turnering', dateTime: 'Lørdag kl. 12:00', location: '', maxParticipants: null, courtCount: 4, format: 'knockout', scoringSystem: 'padel', courtNames: {}, showEmail: false, showTelefon: false, defaultMatchTime: 20 };
         await set(ref(db, 'tournaments/default'), tournament);
       }
       applyTournamentSettings();
@@ -1043,6 +1057,7 @@
       document.getElementById('maxParticipants').value = tournament.maxParticipants || '';
       document.getElementById('courtCount').value = tournament.courtCount || 4;
       document.getElementById('tournamentFormat').value = tournament.format || 'knockout';
+      document.getElementById('tournamentScoringSystem').value = tournament.scoringSystem || 'padel';
       document.getElementById('showEmail').checked = tournament.showEmail !== false;
       document.getElementById('showTelefon').checked = tournament.showTelefon !== false;
       document.getElementById('defaultMatchTime').value = tournament.defaultMatchTime || 20;
@@ -1254,14 +1269,21 @@
 
     el.innerHTML = courtBlocks.map(({ current: match, next }) => {
       activeMatches.push(match);
-      const ps = match.padelScore || defaultPadelScore();
-      const sc = formatPadelScore(ps);
+      const americanoMode = isAmericano();
       const teamANames = getTeamNames(match.teamA);
       const teamBNames = getTeamNames(match.teamB);
-      const deuceClass = (sc.deuce || sc.advantage) ? 'golden-point' : '';
       const timer = match.timer || {};
       const remaining = getTimerRemaining(timer);
       const timerUp = remaining !== null && remaining <= 0 && timer.running;
+
+      // Padel score vars
+      const ps = match.padelScore || defaultPadelScore();
+      const sc = americanoMode ? null : formatPadelScore(ps);
+      const deuceClass = (!americanoMode && sc && (sc.deuce || sc.advantage)) ? 'golden-point' : '';
+
+      // Americano score vars
+      const as = match.americanoScore || defaultAmericanoScore();
+      const canUndo = americanoMode ? as.history.length > 0 : (sc && sc.canUndo);
 
       const nextHTML = next ? `<div style="padding:10px 16px;background:rgba(255,255,255,0.04);border-top:1px solid rgba(255,255,255,0.08);font-size:0.8rem;color:#888;text-align:center;">
         Næste kamp #${next.id + 1}: <span style="color:#ccc;font-weight:600;">${getTeamNames(next.teamA)}</span> vs <span style="color:#ccc;font-weight:600;">${getTeamNames(next.teamB)}</span>
@@ -1290,13 +1312,18 @@
         </div>
       </div>`;
 
-      return `<div class="sk-match ${deuceClass}">
-        <div class="sk-match-header">
-          <span class="sk-bane">${getCourtName(match.court)}</span>
-          ${sc.advLabel ? `<span class="sk-golden-label">${sc.advLabel.toUpperCase()}</span>` : ''}
-          <span>Kamp #${match.id + 1}</span>
-        </div>
-        ${timerHTML}
+      const scoreboard = americanoMode ? `
+        <div class="sk-scoreboard">
+          <div class="sk-team">
+            <div class="sk-team-name">${teamANames}</div>
+            <div class="sk-games" style="font-size:2.4rem;color:#e65100;">${as.pointsA}</div>
+          </div>
+          <div class="sk-vs">-</div>
+          <div class="sk-team">
+            <div class="sk-team-name">${teamBNames}</div>
+            <div class="sk-games" style="font-size:2.4rem;color:#e65100;">${as.pointsB}</div>
+          </div>
+        </div>` : `
         <div class="sk-scoreboard">
           <div class="sk-team">
             <div class="sk-serve ${sc.serving === 'A' ? 'active' : ''}" onclick="toggleServe(${match.id})">🎾</div>
@@ -1311,13 +1338,22 @@
             <div class="sk-games">${sc.gamesB}</div>
             <div class="sk-points">${sc.ptsB}</div>
           </div>
+        </div>`;
+
+      return `<div class="sk-match ${deuceClass}">
+        <div class="sk-match-header">
+          <span class="sk-bane">${getCourtName(match.court)}</span>
+          ${!americanoMode && sc && sc.advLabel ? `<span class="sk-golden-label">${sc.advLabel.toUpperCase()}</span>` : ''}
+          <span>Kamp #${match.id + 1}</span>
         </div>
+        ${timerHTML}
+        ${scoreboard}
         <div class="sk-buttons">
           <button class="sk-point-btn team-a" onclick="refAddPoint(${match.id},'A')">+ Point<br>Hold ${match.teamA + 1}</button>
           <button class="sk-point-btn team-b" onclick="refAddPoint(${match.id},'B')">+ Point<br>Hold ${match.teamB + 1}</button>
         </div>
         <div class="sk-undo-row">
-          <button class="sk-undo-btn" onclick="refUndo(${match.id})" ${sc.canUndo ? '' : 'disabled style="opacity:0.3;cursor:default;"'}>↩ Fortryd</button>
+          <button class="sk-undo-btn" onclick="refUndo(${match.id})" ${canUndo ? '' : 'disabled style="opacity:0.3;cursor:default;"'}>↩ Fortryd</button>
           <button class="sk-finish-btn" onclick="refFinishMatch(${match.id})">Afslut kamp</button>
         </div>
         ${nextHTML}
@@ -1373,7 +1409,11 @@
     const m = findMatch(matchId);
     if (!m) return;
     m.status = 'in-progress';
-    if (!m.padelScore) m.padelScore = defaultPadelScore();
+    if (isAmericano()) {
+      if (!m.americanoScore) m.americanoScore = defaultAmericanoScore();
+    } else {
+      if (!m.padelScore) m.padelScore = defaultPadelScore();
+    }
     const dur = (tournament.defaultMatchTime || 20) * 60;
     m.timer = { duration: dur, remaining: dur, running: false, startedAt: null };
     saveBracketDataNow(); renderRefScorekeeper();
@@ -1382,15 +1422,29 @@
   window.refAddPoint = (matchId, team) => {
     const m = findMatch(matchId);
     if (!m || m.status !== 'in-progress') return;
-    if (!m.padelScore) m.padelScore = defaultPadelScore();
-    addPadelPoint(m.padelScore, team);
+    if (isAmericano()) {
+      if (!m.americanoScore) m.americanoScore = defaultAmericanoScore();
+      const as = m.americanoScore;
+      as.history.push({ pointsA: as.pointsA, pointsB: as.pointsB });
+      if (team === 'A') as.pointsA++; else as.pointsB++;
+    } else {
+      if (!m.padelScore) m.padelScore = defaultPadelScore();
+      addPadelPoint(m.padelScore, team);
+    }
     saveBracketData(); renderRefScorekeeper();
   };
 
   window.refUndo = (matchId) => {
     const m = findMatch(matchId);
-    if (!m || !m.padelScore) return;
-    if (!undoPadelLast(m.padelScore)) return showToast('Intet at fortryde');
+    if (isAmericano()) {
+      if (!m || !m.americanoScore || !m.americanoScore.history.length) return showToast('Intet at fortryde');
+      const prev = m.americanoScore.history.pop();
+      m.americanoScore.pointsA = prev.pointsA;
+      m.americanoScore.pointsB = prev.pointsB;
+    } else {
+      if (!m || !m.padelScore) return;
+      if (!undoPadelLast(m.padelScore)) return showToast('Intet at fortryde');
+    }
     saveBracketData(); renderRefScorekeeper();
   };
 
@@ -1441,12 +1495,21 @@
   window.refFinishMatch = (matchId) => {
     const m = findMatch(matchId);
     if (!m) return;
-    const ps = m.padelScore || defaultPadelScore();
-    if (ps.gamesA === 0 && ps.gamesB === 0) return showToast('Spil mindst 1 parti');
-    if (ps.gamesA === ps.gamesB) return showToast('Uafgjort - spil videre');
-    completeMatchWithScore(m, ps.gamesA, ps.gamesB);
-    saveBracketDataNow(); renderRefScorekeeper();
-    showToast('Kamp afsluttet! ' + ps.gamesA + '-' + ps.gamesB);
+    if (isAmericano()) {
+      const as = m.americanoScore || defaultAmericanoScore();
+      if (as.pointsA === 0 && as.pointsB === 0) return showToast('Ingen point registreret endnu');
+      if (as.pointsA === as.pointsB) return showToast('Uafgjort - spil videre');
+      completeMatchWithScore(m, as.pointsA, as.pointsB);
+      saveBracketDataNow(); renderRefScorekeeper();
+      showToast('Kamp afsluttet! ' + as.pointsA + '-' + as.pointsB);
+    } else {
+      const ps = m.padelScore || defaultPadelScore();
+      if (ps.gamesA === 0 && ps.gamesB === 0) return showToast('Spil mindst 1 parti');
+      if (ps.gamesA === ps.gamesB) return showToast('Uafgjort - spil videre');
+      completeMatchWithScore(m, ps.gamesA, ps.gamesB);
+      saveBracketDataNow(); renderRefScorekeeper();
+      showToast('Kamp afsluttet! ' + ps.gamesA + '-' + ps.gamesB);
+    }
   };
 
   window.toggleServe = (matchId) => {
@@ -1470,7 +1533,8 @@
     const arr = Array.isArray(matches) ? matches : Object.values(matches);
     return arr.map(m => {
       const ps = m.padelScore ? { ...m.padelScore, history: m.padelScore.history || [] } : null;
-      return { id: m.id ?? 0, round: m.round ?? 1, position: m.position ?? 0, teamA: m.teamA ?? null, teamB: m.teamB ?? null, court: m.court ?? 1, status: m.status ?? 'waiting', scoreA: m.scoreA ?? null, scoreB: m.scoreB ?? null, winner: m.winner ?? null, feedsInto: m.feedsInto ?? null, padelScore: ps, timer: m.timer ?? null };
+      const as = m.americanoScore ? { ...m.americanoScore, history: m.americanoScore.history || [] } : null;
+      return { id: m.id ?? 0, round: m.round ?? 1, position: m.position ?? 0, teamA: m.teamA ?? null, teamB: m.teamB ?? null, court: m.court ?? 1, status: m.status ?? 'waiting', scoreA: m.scoreA ?? null, scoreB: m.scoreB ?? null, winner: m.winner ?? null, feedsInto: m.feedsInto ?? null, padelScore: ps, americanoScore: as, timer: m.timer ?? null };
     });
   }
   function normalizeTeams(teams) {
@@ -1573,7 +1637,7 @@
     const courtCount = parseInt(document.getElementById('courtCount').value) || 4;
     const courtNames = {};
     for (let i = 1; i <= courtCount; i++) { const el = document.getElementById('courtName' + i); courtNames[i] = el ? el.value.trim() || ('Bane ' + i) : 'Bane ' + i; }
-    tournament = { name: document.getElementById('tournamentName').value, dateTime: document.getElementById('tournamentDateTime').value, location: document.getElementById('tournamentLocation').value, maxParticipants: parseInt(document.getElementById('maxParticipants').value) || null, courtCount, format: document.getElementById('tournamentFormat').value, courtNames, showEmail: document.getElementById('showEmail').checked, showTelefon: document.getElementById('showTelefon').checked, defaultMatchTime: parseInt(document.getElementById('defaultMatchTime').value) || 20 };
+    tournament = { name: document.getElementById('tournamentName').value, dateTime: document.getElementById('tournamentDateTime').value, location: document.getElementById('tournamentLocation').value, maxParticipants: parseInt(document.getElementById('maxParticipants').value) || null, courtCount, format: document.getElementById('tournamentFormat').value, scoringSystem: document.getElementById('tournamentScoringSystem').value, courtNames, showEmail: document.getElementById('showEmail').checked, showTelefon: document.getElementById('showTelefon').checked, defaultMatchTime: parseInt(document.getElementById('defaultMatchTime').value) || 20 };
     try { await set(ref(db, 'tournaments/default'), tournament); applyTournamentSettings(); showToast('Indstillinger gemt'); }
     catch(err) { showToast('Fejl: ' + err.message); }
   };
