@@ -1346,7 +1346,7 @@
         <div style="font-size:0.7rem;color:#888;text-align:center;margin-bottom:2px;">${timerLabel}</div>
         <div class="sk-timer-display ${showTimeUp ? 'time-up' : ''}" id="timer-${match.id}">${formatTimer(timerVal)}</div>
         <div class="sk-timer-controls">
-          ${matchEndsOnTime() || stopwatch ? `<input type="number" id="timer-input-${match.id}" value="${Math.ceil((timer.duration || (tournament.defaultMatchTime || 20) * 60) / 60)}" min="1" max="120" placeholder="min" /><button onclick="setTimer(${match.id})">Sæt</button>` : ''}
+          ${matchEndsOnTime() && !stopwatch ? `<input type="number" id="timer-input-${match.id}" value="${Math.ceil((timer.duration || (tournament.defaultMatchTime || 20) * 60) / 60)}" min="1" max="120" placeholder="min" /><button onclick="setTimer(${match.id})">Sæt</button>` : ''}
           ${timer.running ? `<button onclick="pauseTimer(${match.id})">Pause</button>` : `<button onclick="startTimer(${match.id})">Start</button>`}
           <button onclick="resetTimer(${match.id})">Nulstil</button>
         </div>
