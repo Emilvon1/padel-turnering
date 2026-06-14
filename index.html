@@ -2302,16 +2302,33 @@
     for (let c = 1; c <= cc; c++) {
       const match = allMatches.find(m => m.court === c && m.status === 'in-progress');
       if (match && match.teamA != null && match.teamB != null) {
-        const ps = match.padelScore || defaultPadelScore(); const sc = formatPadelScore(ps);
         const tA = getTeamNames(match.teamA);
         const tB = getTeamNames(match.teamB);
-        const timer = match.timer; const rem = getTimerRemaining(timer); const up = rem !== null && rem <= 0 && timer && timer.running;
+        const timer = match.timer;
+        const sw = isStopwatch();
+        const timerVal = sw ? getElapsed(timer) : getTimerRemaining(timer);
+        const up = sw
+          ? (matchEndsOnTime() && timer && timer.duration && getElapsed(timer) >= timer.duration)
+          : (timerVal !== null && timerVal <= 0 && timer && timer.running);
+        let scoreAHtml, scoreBHtml, advHtml = '';
+        if (isAmericano()) {
+          const as = match.americanoScore || defaultAmericanoScore();
+          scoreAHtml = `<div class="court-padel-score"><span class="court-padel-games" id="pub-score-a-${match.id}">${as.pointsA}</span></div>`;
+          scoreBHtml = `<div class="court-padel-score"><span class="court-padel-games" id="pub-score-b-${match.id}">${as.pointsB}</span></div>`;
+        } else {
+          const sc = formatPadelScore(match.padelScore || defaultPadelScore());
+          advHtml = sc.advLabel ? `<div style="text-align:center;padding:4px 0;"><span class="court-golden-badge">${sc.advLabel}</span></div>` : '';
+          scoreAHtml = `<div class="court-padel-score"><span class="court-padel-games">${sc.gamesA}</span><span class="court-padel-pts">(${sc.ptsA})</span></div>`;
+          scoreBHtml = `<div class="court-padel-score"><span class="court-padel-games">${sc.gamesB}</span><span class="court-padel-pts">(${sc.ptsB})</span></div>`;
+        }
+        const serveA = !isAmericano() ? (formatPadelScore(match.padelScore || defaultPadelScore()).serving === 'A') : false;
+        const serveB = !isAmericano() ? (formatPadelScore(match.padelScore || defaultPadelScore()).serving === 'B') : false;
         html += `<div class="court-card active"><div class="court-card-header"><span>${getCourtName(c)}</span><span><span class="live-pulse"></span>LIVE</span></div>
-          ${rem !== null ? `<div id="pub-timer-${match.id}" class="court-timer-public ${up?'time-up':''}">${formatTimer(rem)}</div>` : ''}
-          ${sc.advLabel ? `<div style="text-align:center;padding:4px 0;"><span class="court-golden-badge">${sc.advLabel}</span></div>` : ''}
+          ${timerVal !== null ? `<div id="pub-timer-${match.id}" class="court-timer-public ${up?'time-up':''}">${formatTimer(timerVal)}</div>` : ''}
+          ${advHtml}
           <div class="court-card-body">
-            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='A'?'active':''}">🎾</span> ${tA}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesA}</span><span class="court-padel-pts">(${sc.ptsA})</span></div></div>
-            <div class="court-card-team"><span class="team-name"><span class="court-serve ${sc.serving==='B'?'active':''}">🎾</span> ${tB}</span><div class="court-padel-score"><span class="court-padel-games">${sc.gamesB}</span><span class="court-padel-pts">(${sc.ptsB})</span></div></div>
+            <div class="court-card-team"><span class="team-name"><span class="court-serve ${serveA?'active':''}">🎾</span> ${tA}</span>${scoreAHtml}</div>
+            <div class="court-card-team"><span class="team-name"><span class="court-serve ${serveB?'active':''}">🎾</span> ${tB}</span>${scoreBHtml}</div>
           </div></div>`;
       } else {
         html += `<div class="court-card"><div class="court-card-header"><span>${getCourtName(c)}</span></div><div class="court-card-idle">Ingen kamp i gang</div></div>`;
@@ -2322,16 +2339,22 @@
     el.innerHTML = html;
   }
 
-  // Refresh only public timer text elements (avoid full DOM rebuild every second)
+  // Refresh public timer and score elements every second (avoid full DOM rebuild)
   setInterval(() => {
+    const sw = isStopwatch();
     allMatches.forEach(m => {
       if (m.status !== 'in-progress' || !m.timer || !m.timer.running) return;
-      const el = document.getElementById('pub-timer-' + m.id);
-      if (!el) return;
-      const rem = getTimerRemaining(m.timer);
-      if (rem == null) return;
-      el.textContent = formatTimer(rem);
-      el.className = 'court-timer-public' + (rem <= 0 ? ' time-up' : '');
+      const timerEl = document.getElementById('pub-timer-' + m.id);
+      if (timerEl) {
+        const val = sw ? getElapsed(m.timer) : getTimerRemaining(m.timer);
+        if (val != null) {
+          timerEl.textContent = formatTimer(val);
+          const up = sw
+            ? (matchEndsOnTime() && m.timer.duration && val >= m.timer.duration)
+            : val <= 0;
+          timerEl.className = 'court-timer-public' + (up ? ' time-up' : '');
+        }
+      }
     });
   }, 1000);
 
